@@ -80,7 +80,9 @@ def rq1(runs, ref, lines):
     return noise_keys, noise_S
 
 def systematic(runs, ref, noise_keys, lines):
-    """Does a precision shift each token the same way in two independent runs? Batch noise should not."""
+    """Does a precision shift each token the same way in two independent runs? Two designs, reported side by side.
+    Same batch size: both runs share whatever shift that batch size's kernels cause, plus any quantization shift.
+    Different batch sizes: the runs share no batch effect, so agreement beyond chance comes from quantization alone."""
     def pair_stats(k1, k2):
         agree, xs, ys = [], [], []
         for pid in set(runs[k1]) & set(runs[k2]) & set(ref):
@@ -91,14 +93,27 @@ def systematic(runs, ref, noise_keys, lines):
                     agree.append(np.sign(x) == np.sign(y)); xs.append(x); ys.append(y)
         if len(xs) < 3: return None
         return float(np.mean(agree)), float(np.corrcoef(xs, ys)[0, 1]), len(xs)
-    lines += ["", "## Systematic or random: agreement of per-token shifts across two independent runs", "",
-              "| Precision | Same sign | Correlation | Tokens compared |", "|---|---|---|---|"]
     groups = {"bf16 (noise)": noise_keys} | {c: [k for k in runs if k[0] == c] for c in NAMES if c != "bf16"}
-    for name, keys in groups.items():
-        keys = sorted(keys, key=lambda k: (k[1] != 64, k))         # prefer two runs at the same large batch
-        if len(keys) < 2: continue
-        st = pair_stats(keys[0], keys[1])
-        if st: lines.append(f"| {NAMES.get(name, name)} | {100*st[0]:.1f}% | {st[1]:.3f} | {st[2]:,} |")
+    def same_batch(keys):
+        big = max(k[1] for k in keys); s_ = sorted(k for k in keys if k[1] == big)
+        return (s_[0], s_[1]) if len(s_) >= 2 else None
+    def cross_batch(keys):
+        lo, hi = min(k[1] for k in keys), max(k[1] for k in keys)
+        if lo == hi: return None
+        return (sorted(k for k in keys if k[1] == lo)[-1], sorted(k for k in keys if k[1] == hi)[0])
+    for title, chooser in (("different batch sizes, the fair test", cross_batch), ("the same batch size", same_batch)):
+        lines += ["", f"## Systematic or random: agreement of per-token shifts across two runs at {title}", "",
+                  "| Precision | Runs compared | Same sign | Correlation | Tokens compared |", "|---|---|---|---|---|"]
+        for name, keys in groups.items():
+            pair = chooser(keys) if len(keys) >= 2 else None
+            if not pair:
+                continue
+            st = pair_stats(*pair)
+            label = f"batch {pair[0][1]} rep {pair[0][2]} vs batch {pair[1][1]} rep {pair[1][2]}"
+            if st:
+                lines.append(f"| {NAMES.get(name, name)} | {label} | {100*st[0]:.1f}% | {st[1]:.3f} | {st[2]:,} |")
+            else:                                      # e.g. a bit-identical repeat: say so, never drop the row
+                lines.append(f"| {NAMES.get(name, name)} | {label} | no shift | no shift | 0 |")
 
 def power(runs, ref, noise_S, lines, alpha=0.01, trials=2000, seed=0):
     rng = random.Random(seed)
@@ -111,6 +126,41 @@ def power(runs, ref, noise_S, lines, alpha=0.01, trials=2000, seed=0):
         if len(S) < max(ns, default=0): continue
         cells = [f"{100*np.mean([statistics.median(rng.sample(S, n)) > tau[n] for _ in range(trials // 4)]):.0f}%" for n in ns]
         lines.append(f"| {NAMES[cfg]} | " + " | ".join(cells) + " |")
+
+def direction(runs, ref, noise_keys, lines, alpha=0.01, trials=2000, seed=0):
+    """Direction, not magnitude: does a run's per-token shift point the same way as a precision's fingerprint?
+    The fingerprint for each precision comes from its batch-1 repeat-0 run. Each other run of that precision, and
+    each BF16 noise run, gets a per-prompt score: the correlation between its shifts and the fingerprint's on the
+    tokens both share. Detection power is then measured exactly like the magnitude test."""
+    rng = random.Random(seed)
+    def scores(run, fp):
+        out = []
+        for pid, rec in run.items():
+            if pid not in ref or pid not in fp: continue
+            d = compare(rec, ref[pid])[0]; f = compare(fp[pid], ref[pid])[0]
+            n = min(len(d), len(f))
+            if n >= 5 and np.std(d[:n]) > 0 and np.std(f[:n]) > 0:
+                out.append(float(np.corrcoef(d[:n], f[:n])[0, 1]))
+        return out
+    ns = (5, 10, 20, 50)
+    rows = []
+    for cfg in [c for c in NAMES if c != "bf16"]:
+        fp_key = (cfg, 1, 0)
+        if fp_key not in runs: continue
+        fp = runs[fp_key]
+        pos = [s_ for k in runs if k[0] == cfg and k != fp_key for s_ in scores(runs[k], fp)]
+        neg = [s_ for k in noise_keys for s_ in scores(runs[k], fp)]
+        if len(pos) < max(ns) or len(neg) < max(ns): continue
+        cells = []
+        for n in ns:
+            tau = sorted(statistics.mean(rng.sample(neg, n)) for _ in range(trials))[int((1 - alpha) * trials) - 1]
+            cells.append(f"{100*np.mean([statistics.mean(rng.sample(pos, n)) > tau for _ in range(trials // 4)]):.0f}%")
+        rows.append((NAMES[cfg], statistics.mean(pos), statistics.mean(neg), cells))
+    lines += ["", f"## Direction detector: correlation with each precision's fingerprint, power at {alpha:.0%} false positives", "",
+              "| Precision | Mean score, same precision | Mean score, BF16 noise | " + " | ".join(f"{n} prompts" for n in ns) + " |",
+              "|---|---|---|" + "---|" * len(ns)]
+    for name, mp, mn, cells in rows:
+        lines.append(f"| {name} | {mp:.3f} | {mn:.3f} | " + " | ".join(cells) + " |")
 
 def attribution(runs, ref, lines, ns=(1, 5, 10, 20, 50), per_run=150, seed=0):
     """Leave one batch size out: train on the others, test on the held-out batch, so the classifier is tested on
@@ -186,7 +236,8 @@ def audit(runs, ref, feats, labels, paths, lines, n_per=None):
 
 def main(a):
     (ROOT / "results").mkdir(exist_ok=True)
-    runs = load(sorted(p for p in glob.glob(str(ROOT / "data" / "*.jsonl")) if not pathlib.Path(p).name.startswith("api_")))
+    a.data = getattr(a, "data", "data")
+    runs = load(sorted(p for p in glob.glob(str(ROOT / a.data / "*.jsonl")) if not pathlib.Path(p).name.startswith("api_")))
     if REF not in runs:
         raise SystemExit("missing the reference run: collect bf16 with batch 1 first")
     ref = runs[REF]
@@ -194,11 +245,12 @@ def main(a):
     noise_keys, noise_S = rq1(runs, ref, lines)
     systematic(runs, ref, noise_keys, lines)
     power(runs, ref, noise_S, lines)
+    direction(runs, ref, noise_keys, lines)
     feats, labels = attribution(runs, ref, lines)
     if a.audit:
         audit(runs, ref, feats, labels, a.audit, lines)
     (ROOT / "results" / "report.md").write_text("\n".join(lines) + "\n"); print("\n".join(lines))
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(); ap.add_argument("--audit", nargs="*")
+    ap = argparse.ArgumentParser(); ap.add_argument("--audit", nargs="*"); ap.add_argument("--data", default="data")
     main(ap.parse_args())

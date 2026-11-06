@@ -46,17 +46,26 @@ with open(data / "api_fake.jsonl", "w") as fh:
         r = record("int4-awq", 64, 0, pid, text_only=True); r["config"] = "api:FakeProvider"; r["declared"] = "bf16"
         fh.write(json.dumps(r) + "\n")
 
-class A: audit = [str(data / "api_fake.jsonl")]
+class A:
+    audit = [str(data / "api_fake.jsonl")]; data = "data"
 analyze.main(A)
 report = (ROOT / "results" / "report.md").read_text()
 rows = {l.split("|")[1].strip(): l for l in report.splitlines() if l.startswith("| ")}
 auc = lambda name: float(rows[name].split("|")[3])
 assert auc("BF16 vs INT4 GPTQ") > 0.95 and auc("BF16 vs FP8") > 0.9, "large shifts should separate cleanly from noise"
 assert auc("BF16 vs FP16 (control)") < auc("BF16 vs INT4 GPTQ"), "the FP16 control should sit below INT4"
-sys_rows = report.split("## Systematic")[1].split("##")[0]
-noise_same = float([l for l in sys_rows.splitlines() if l.startswith("| BF16 (noise)") or l.startswith("| bf16 (noise)")][0].split("|")[2].strip("% "))
-int4_same = float([l for l in sys_rows.splitlines() if l.startswith("| INT4 GPTQ")][0].split("|")[2].strip("% "))
-assert int4_same > 85 and 35 < noise_same < 65, ("systematic shifts should agree in sign; noise should not", int4_same, noise_same)
+fair = report.split("different batch sizes, the fair test")[1].split("## ")[0]
+same = report.split("at the same batch size")[1].split("## ")[0]
+row = lambda sec, name: [l for l in sec.splitlines() if l.lower().startswith("| " + name.lower())][0].split("|")
+assert "no shift" in row(fair, "BF16 (noise)")[3], "a bit-identical batch-1 repeat must be reported as no shift"
+int4_fair = float(row(fair, "INT4 GPTQ")[3].strip(" %"))
+noise_same = float(row(same, "BF16 (noise)")[3].strip(" %"))
+assert int4_fair > 85 and 35 < noise_same < 65, ("systematic shifts agree across batch sizes; planted noise does not", int4_fair, noise_same)
+dir_sec = report.split("## Direction detector")[1].split("## ")[0]
+fp16_dir = [l for l in dir_sec.splitlines() if l.startswith("| FP16")][0].split("|")
+fp16_mag = [l for l in report.split("## Detection power")[1].split("## ")[0].splitlines() if l.startswith("| FP16")][0].split("|")
+assert float(fp16_dir[4].strip(" %")) >= float(fp16_mag[2].strip(" %")), "direction should do at least as well as magnitude on a systematic shift"
+assert float(fp16_dir[2]) > 0.5 > abs(float(fp16_dir[3])), ("fingerprint should correlate with its own precision, not with noise", fp16_dir)
 acc_line = [l for l in report.splitlines() if l.startswith("| Accuracy")][0]
 assert float(acc_line.split("|")[-2].strip(" %")) > 80, acc_line
 audit_row = [l for l in report.splitlines() if l.startswith("| FakeProvider")][0]

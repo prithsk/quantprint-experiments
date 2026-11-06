@@ -34,13 +34,15 @@ def main(a):
     from vllm import LLM, SamplingParams
     cfg = CONFIGS[a.config]
     probes, fillers = prompts(a.probes, 2000)
+    # Prefix caching is off by default: with it on, every run after the first reuses cached prompt computations,
+    # which gives all later runs a shared shift against the fresh first run and inflates the noise correlation.
     llm = LLM(model=cfg["model"], quantization=cfg["quantization"], dtype=cfg["dtype"], max_model_len=2048,
-              gpu_memory_utilization=a.gpu_mem, seed=0)
+              gpu_memory_utilization=a.gpu_mem, seed=0, enable_prefix_caching=a.prefix_cache)
     tok = llm.get_tokenizer()
     chat = lambda p: tok.apply_chat_template([{"role": "user", "content": p}], tokenize=False, add_generation_prompt=True)
     probes_c, fillers_c = [chat(p) for p in probes], [chat(p) for p in fillers]
     sp = SamplingParams(temperature=0.0, max_tokens=a.tokens, logprobs=a.k)
-    out = (ROOT / "data"); out.mkdir(exist_ok=True)
+    out = (ROOT / a.out); out.mkdir(exist_ok=True)
     path = out / f"{a.config}.jsonl"
     with open(path, "a") as fh:
         for b in [int(x) for x in a.batches.split(",")]:
@@ -74,4 +76,6 @@ if __name__ == "__main__":
     ap.add_argument("--batches", default="1,8,64"); ap.add_argument("--repeats", type=int, default=2)
     ap.add_argument("--probes", type=int, default=200); ap.add_argument("--tokens", type=int, default=64)
     ap.add_argument("--k", type=int, default=5); ap.add_argument("--gpu-mem", type=float, default=0.85)
+    ap.add_argument("--prefix-cache", action="store_true", help="turn vLLM prefix caching on, as the first data set had it")
+    ap.add_argument("--out", default="data", help="output folder, so data sets with different settings stay apart")
     main(ap.parse_args())
