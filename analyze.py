@@ -127,28 +127,62 @@ def power(runs, ref, noise_S, lines, alpha=0.01, trials=2000, seed=0):
         cells = [f"{100*np.mean([statistics.median(rng.sample(S, n)) > tau[n] for _ in range(trials // 4)]):.0f}%" for n in ns]
         lines.append(f"| {NAMES[cfg]} | " + " | ".join(cells) + " |")
 
+def direction_scores(run, fp, ref):
+    """Per-prompt correlation between a run's per-token shifts and a fingerprint's, on the tokens both share."""
+    out = []
+    for pid, rec in run.items():
+        if pid not in ref or pid not in fp: continue
+        d = compare(rec, ref[pid])[0]; f = compare(fp[pid], ref[pid])[0]
+        n = min(len(d), len(f))
+        if n >= 5 and np.std(d[:n]) > 0 and np.std(f[:n]) > 0:
+            out.append(float(np.corrcoef(d[:n], f[:n])[0, 1]))
+    return out
+
+def hardware(runs, ref, noise_keys, noise_S, hw_runs, lines, alpha=0.01, trials=2000, seed=0):
+    """BF16 served on different hardware is honest, so every flag here is a false accusation. Thresholds come from
+    the reference hardware's own noise, exactly as in the detection tests, so a hardware effect shows up as a false
+    positive rate far above alpha."""
+    rng = random.Random(seed); ns = (5, 10, 20, 50)
+    hw_S = [s_ for k in hw_runs for s_ in per_prompt_S(hw_runs[k], ref).values()]
+    shift = [abs(x) for k in hw_runs for pid, rec in hw_runs[k].items() if pid in ref for x in compare(rec, ref[pid])[0]]
+    def fpr(neg, test, agg):
+        cells = []
+        for n in ns:
+            if len(neg) < n or len(test) < n:
+                cells.append("n/a"); continue
+            tau = sorted(agg(rng.sample(neg, n)) for _ in range(trials))[int((1 - alpha) * trials) - 1]
+            cells.append(f"{100*np.mean([agg(rng.sample(test, n)) > tau for _ in range(trials // 4)]):.0f}%")
+        return cells
+    lines += ["", "## Hardware: honest BF16 on other hardware, how often each test falsely flags it", "",
+              f"{len(hw_runs)} runs on the other hardware; mean absolute shift against the reference "
+              f"{(np.mean(shift) if shift else float('nan')):.5f} nats. A test that ignores hardware flags it about {alpha:.0%} of the time.", "",
+              "| Test | " + " | ".join(f"{n} prompts" for n in ns) + " |", "|---|" + "---|" * len(ns),
+              "| Magnitude | " + " | ".join(fpr(noise_S, hw_S, statistics.median)) + " |"]
+    for cfg in [c for c in NAMES if c != "bf16"]:
+        fp_key = (cfg, 1, 0)
+        if fp_key not in runs: continue
+        fp = runs[fp_key]
+        neg = [s_ for k in noise_keys for s_ in direction_scores(runs[k], fp, ref)]
+        test = [s_ for k in hw_runs for s_ in direction_scores(hw_runs[k], fp, ref)]
+        lines.append(f"| Direction, {NAMES[cfg]} fingerprint (mean score {statistics.mean(test) if test else float('nan'):.3f}) | "
+                     + " | ".join(fpr(neg, test, statistics.mean)) + " |")
+
 def direction(runs, ref, noise_keys, lines, alpha=0.01, trials=2000, seed=0):
     """Direction, not magnitude: does a run's per-token shift point the same way as a precision's fingerprint?
     The fingerprint for each precision comes from its batch-1 repeat-0 run. Each other run of that precision, and
     each BF16 noise run, gets a per-prompt score: the correlation between its shifts and the fingerprint's on the
     tokens both share. Detection power is then measured exactly like the magnitude test."""
     rng = random.Random(seed)
-    def scores(run, fp):
-        out = []
-        for pid, rec in run.items():
-            if pid not in ref or pid not in fp: continue
-            d = compare(rec, ref[pid])[0]; f = compare(fp[pid], ref[pid])[0]
-            n = min(len(d), len(f))
-            if n >= 5 and np.std(d[:n]) > 0 and np.std(f[:n]) > 0:
-                out.append(float(np.corrcoef(d[:n], f[:n])[0, 1]))
-        return out
+    scores = lambda run, fp: direction_scores(run, fp, ref)
     ns = (5, 10, 20, 50)
     rows = []
     for cfg in [c for c in NAMES if c != "bf16"]:
         fp_key = (cfg, 1, 0)
         if fp_key not in runs: continue
         fp = runs[fp_key]
-        pos = [s_ for k in runs if k[0] == cfg and k != fp_key for s_ in scores(runs[k], fp)]
+        # Only runs at a different batch size from the fingerprint: an auditor builds the fingerprint at batch 1,
+        # but the provider serves at a batch size it cannot see, and a same-batch repeat can be bit-identical.
+        pos = [s_ for k in runs if k[0] == cfg and k[1] != fp_key[1] for s_ in scores(runs[k], fp)]
         neg = [s_ for k in noise_keys for s_ in scores(runs[k], fp)]
         if len(pos) < max(ns) or len(neg) < max(ns): continue
         cells = []
@@ -246,6 +280,9 @@ def main(a):
     systematic(runs, ref, noise_keys, lines)
     power(runs, ref, noise_S, lines)
     direction(runs, ref, noise_keys, lines)
+    if getattr(a, "hardware", None):
+        hw = load(sorted(glob.glob(str(ROOT / a.hardware / "*.jsonl"))))
+        hardware(runs, ref, noise_keys, noise_S, {k: v for k, v in hw.items() if k[0] == "bf16"}, lines)
     feats, labels = attribution(runs, ref, lines)
     if a.audit:
         audit(runs, ref, feats, labels, a.audit, lines)
@@ -253,4 +290,5 @@ def main(a):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(); ap.add_argument("--audit", nargs="*"); ap.add_argument("--data", default="data")
+    ap.add_argument("--hardware", help="folder of BF16 runs collected on different hardware, scored as honest runs")
     main(ap.parse_args())

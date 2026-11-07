@@ -59,6 +59,20 @@ The audit uses the same probe prompts, routes each request to one provider with 
 precision each provider declares on OpenRouter with the precision QuantPrint detects. If no provider of this model
 returns log-probabilities, the audit needs a different model, and that model's local runs must be collected first.
 
+## Hardware test
+
+Honest BF16 served on a different GPU should not be flagged. Collect BF16 on another GPU into its own folder and
+score it against the reference GPU's fingerprints:
+
+```
+python collect.py --config bf16 --batches 1,64 --repeats 2 --probes 120 --out data-a100
+python analyze.py --data data-nocache --hardware data-a100
+```
+
+The report gives how often each test falsely flags the other GPU. About 1% means hardware does not matter; far more
+means each GPU leaves its own fingerprint. `python test_hardware.py` checks that the scoring catches a planted
+hardware shift and stays near 1% without one.
+
 ## Not covered yet
 
 The paper's vLLM against SGLang row needs a second collector for SGLang, which installs in a separate environment.
