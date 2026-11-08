@@ -38,6 +38,14 @@ def main(a):
     # which gives all later runs a shared shift against the fresh first run and inflates the noise correlation.
     llm = LLM(model=cfg["model"], quantization=cfg["quantization"], dtype=cfg["dtype"], max_model_len=2048,
               gpu_memory_utilization=a.gpu_mem, seed=0, enable_prefix_caching=a.prefix_cache)
+    # Record exactly what produced this data, so a paper never has to guess the version later.
+    import torch, vllm, datetime, subprocess as _sp
+    gpu = _sp.run(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], capture_output=True, text=True).stdout.strip()
+    (ROOT / a.out).mkdir(exist_ok=True)
+    (ROOT / a.out / f"{a.config}.meta.json").write_text(json.dumps({
+        "config": a.config, "model": cfg["model"], "vllm": vllm.__version__, "torch": torch.__version__, "gpu": gpu,
+        "prefix_cache": a.prefix_cache, "probes": a.probes, "tokens": a.tokens, "k": a.k,
+        "date": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds")}, indent=2))
     tok = llm.get_tokenizer()
     chat = lambda p: tok.apply_chat_template([{"role": "user", "content": p}], tokenize=False, add_generation_prompt=True)
     probes_c, fillers_c = [chat(p) for p in probes], [chat(p) for p in fillers]
