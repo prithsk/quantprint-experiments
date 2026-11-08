@@ -1,0 +1,86 @@
+# QuantPrint results: 26 runs, 120 probe prompts
+
+## RQ1: shift from each precision against the noise floor
+
+| Comparison | Mean abs shift, nats | AUC against noise |
+|---|---|---|
+| Same precision, repeat at batch 1 | 0.00000 | --- |
+| Same precision, batch 1 vs 8 | 0.00908 | --- |
+| Same precision, batch 1 vs 64 | 0.00934 | --- |
+| BF16 vs FP16 (control) | 0.00908 | 0.585 |
+| BF16 vs FP8 | 0.03479 | 0.916 |
+| BF16 vs INT8 GPTQ | 0.01079 | 0.689 |
+| BF16 vs INT4 GPTQ | 0.05833 | 0.949 |
+| BF16 vs INT4 AWQ | 0.06312 | 0.948 |
+
+## Systematic or random: agreement of per-token shifts across two runs at different batch sizes, the fair test
+
+| Precision | Runs compared | Same sign | Correlation | Tokens compared |
+|---|---|---|---|---|
+| bf16 (noise) | batch 1 rep 1 vs batch 64 rep 0 | no shift | no shift | 0 |
+| FP16 | batch 1 rep 1 vs batch 64 rep 0 | 96.4% | 0.988 | 4,615 |
+| FP8 | batch 1 rep 1 vs batch 64 rep 0 | 69.0% | 0.510 | 2,019 |
+| INT8 GPTQ | batch 1 rep 1 vs batch 64 rep 0 | 97.0% | 0.993 | 4,474 |
+| INT4 GPTQ | batch 1 rep 1 vs batch 64 rep 0 | 99.5% | 1.000 | 1,485 |
+| INT4 AWQ | batch 1 rep 1 vs batch 64 rep 0 | 99.7% | 1.000 | 1,288 |
+
+## Systematic or random: agreement of per-token shifts across two runs at the same batch size
+
+| Precision | Runs compared | Same sign | Correlation | Tokens compared |
+|---|---|---|---|---|
+| bf16 (noise) | batch 64 rep 0 vs batch 64 rep 1 | 72.6% | 0.603 | 3,980 |
+| FP16 | batch 64 rep 0 vs batch 64 rep 1 | 96.3% | 0.989 | 4,607 |
+| FP8 | batch 64 rep 0 vs batch 64 rep 1 | 88.2% | 0.806 | 2,614 |
+| INT8 GPTQ | batch 64 rep 0 vs batch 64 rep 1 | 98.2% | 0.996 | 4,445 |
+| INT4 GPTQ | batch 64 rep 0 vs batch 64 rep 1 | 99.8% | 1.000 | 1,486 |
+| INT4 AWQ | batch 64 rep 0 vs batch 64 rep 1 | 99.8% | 1.000 | 1,295 |
+
+## Detection power at a 1% false positive rate, by number of probe prompts
+
+| Precision | 5 prompts | 10 prompts | 20 prompts | 50 prompts | 100 prompts | 200 prompts |
+|---|---|---|---|---|---|---|
+| FP16 | 1% | 4% | 2% | 6% | 15% | 52% |
+| FP8 | 97% | 100% | 100% | 100% | 100% | 100% |
+| INT8 GPTQ | 5% | 37% | 60% | 94% | 100% | 100% |
+| INT4 GPTQ | 99% | 100% | 100% | 100% | 100% | 100% |
+| INT4 AWQ | 99% | 100% | 100% | 100% | 100% | 100% |
+
+## Direction detector: correlation with each precision's fingerprint, power at 1% false positives
+
+| Precision | Mean score, same precision | Mean score, BF16 noise | 5 prompts | 10 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|---|---|
+| FP16 | 0.985 | 0.561 | 100% | 100% | 100% | 100% |
+| FP8 | 0.546 | 0.178 | 60% | 82% | 99% | 100% |
+| INT8 GPTQ | 0.989 | 0.486 | 100% | 100% | 100% | 100% |
+| INT4 GPTQ | 1.000 | -0.015 | 100% | 100% | 100% | 100% |
+| INT4 AWQ | 1.000 | 0.030 | 100% | 100% | 100% | 100% |
+
+## Hardware: honest BF16 on other hardware, how often each test falsely flags it
+
+4 runs on the other hardware; mean absolute shift against the reference 0.00915 nats. A test that ignores hardware flags it about 1% of the time.
+
+| Test | 5 prompts | 10 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|
+| Magnitude | 2% | 15% | 16% | 30% |
+| Direction, FP16 fingerprint (mean score 0.541) | 0% | 1% | 1% | 1% |
+| Direction, FP8 fingerprint (mean score 0.184) | 1% | 2% | 2% | 2% |
+| Direction, INT8 GPTQ fingerprint (mean score 0.456) | 0% | 0% | 0% | 0% |
+| Direction, INT4 GPTQ fingerprint (mean score 0.014) | 3% | 2% | 1% | 3% |
+| Direction, INT4 AWQ fingerprint (mean score 0.054) | 1% | 1% | 1% | 2% |
+
+## RQ2: attribution accuracy on a held-out batch size
+
+| Probe prompts per decision | 1 | 5 | 10 | 20 | 50 |
+|---|---|---|---|---|---|
+| Accuracy | 48.4% | 68.1% | 73.9% | 81.1% | 90.9% |
+
+Confusion matrix at 50 prompts per decision, rows true and columns predicted:
+
+| | BF16 | FP16 | FP8 | INT4 AWQ | INT4 GPTQ | INT8 GPTQ |
+|---|---|---|---|---|---|---|
+| BF16 | 634 | 110 | 0 | 0 | 0 | 6 |
+| FP16 | 82 | 505 | 0 | 0 | 0 | 13 |
+| FP8 | 0 | 0 | 600 | 0 | 0 | 0 |
+| INT4 AWQ | 0 | 0 | 0 | 541 | 59 | 0 |
+| INT4 GPTQ | 0 | 0 | 0 | 56 | 544 | 0 |
+| INT8 GPTQ | 8 | 8 | 0 | 0 | 0 | 584 |
