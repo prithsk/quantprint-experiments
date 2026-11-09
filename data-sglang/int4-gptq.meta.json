@@ -1,0 +1,7 @@
+{
+  "engine": "sglang",
+  "config": "int4-gptq",
+  "model": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4",
+  "sglang": "0.5.23",
+  "date": "2026-11-09T07:36:59Z"
+}

@@ -1,0 +1,13 @@
+{
+  "config": "int4-gptq",
+  "family": "qwen2.5-7b",
+  "model": "Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4",
+  "vllm": "0.33.0",
+  "torch": "2.14.0+cu130",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "prefix_cache": false,
+  "probes": 120,
+  "tokens": 64,
+  "k": 5,
+  "date": "2026-11-09T05:36:53+00:00"
+}

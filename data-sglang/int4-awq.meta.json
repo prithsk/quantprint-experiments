@@ -1,0 +1,7 @@
+{
+  "engine": "sglang",
+  "config": "int4-awq",
+  "model": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+  "sglang": "0.5.23",
+  "date": "2026-11-09T07:41:05Z"
+}

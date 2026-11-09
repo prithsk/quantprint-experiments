@@ -1,0 +1,7 @@
+{
+  "engine": "sglang",
+  "config": "bf16",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "sglang": "0.5.23",
+  "date": "2026-11-09T07:14:21Z"
+}

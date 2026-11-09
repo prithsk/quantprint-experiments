@@ -1,0 +1,13 @@
+{
+  "config": "fp16",
+  "family": "muse-glimmer-30b",
+  "model": "meta-models/Muse-Glimmer-30B",
+  "vllm": "0.33.0",
+  "torch": "2.14.0+cu130",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "prefix_cache": false,
+  "probes": 120,
+  "tokens": 64,
+  "k": 5,
+  "date": "2026-11-09T06:27:00+00:00"
+}

@@ -1,0 +1,13 @@
+{
+  "config": "fp8",
+  "family": "qwen2.5-7b",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "vllm": "0.33.0",
+  "torch": "2.14.0+cu130",
+  "gpu": "NVIDIA A100-SXM4-80GB",
+  "prefix_cache": false,
+  "probes": 120,
+  "tokens": 64,
+  "k": 5,
+  "date": "2026-11-09T04:55:12+00:00"
+}
