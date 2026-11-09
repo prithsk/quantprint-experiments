@@ -1,8 +1,8 @@
 """RQ3: query each OpenRouter provider that serves the model, with fallbacks off, and save its top-k log-probabilities
 in the same format as collect.py. Each provider's declared precision comes from OpenRouter's endpoint listing.
-  python audit_openrouter.py --model qwen/qwen-2.5-7b-instruct --probes 50
-  python analyze.py --audit data/api_*.jsonl
-Needs OPENROUTER_API_KEY in .env. A run costs well under a dollar: 50 prompts x 64 tokens per provider.
+  python audit_openrouter.py --model qwen/qwen-2.5-7b-instruct --probes 120
+  python audit_score.py --ref data-nocache --audit data-audit
+Needs OPENROUTER_API_KEY in .env. A run costs well under a dollar: 120 prompts x 64 tokens per provider.
 """
 import argparse, json, os, pathlib, time, urllib.request
 import collect
@@ -49,7 +49,9 @@ def main(a):
     probes, _ = collect.prompts(a.probes, 0)
     eps = endpoints(a.model)
     print("providers:", ", ".join(f"{e['provider']} ({e['declared']}{'' if e['logprobs'] else ', no logprobs'})" for e in eps))
-    out = ROOT / "data"; out.mkdir(exist_ok=True)
+    if a.list:
+        return
+    out = ROOT / a.out; out.mkdir(exist_ok=True)
     for e in [e for e in eps if e["logprobs"]]:
         path = out / f"api_{e['provider'].replace(' ', '_').replace('/', '_')}.jsonl"
         n = 0
@@ -69,7 +71,8 @@ def main(a):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="qwen/qwen-2.5-7b-instruct"); ap.add_argument("--probes", type=int, default=50)
+    ap.add_argument("--model", default="qwen/qwen-2.5-7b-instruct"); ap.add_argument("--probes", type=int, default=120)
     ap.add_argument("--tokens", type=int, default=64); ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--pause", type=float, default=0.2)
+    ap.add_argument("--pause", type=float, default=0.2); ap.add_argument("--out", default="data-audit")
+    ap.add_argument("--list", action="store_true", help="only list providers, their declared precision and logprob support")
     main(ap.parse_args())

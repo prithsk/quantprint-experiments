@@ -10,10 +10,13 @@ import copy, glob, json, math, pathlib, random, statistics, sys
 import numpy as np
 ROOT = pathlib.Path(__file__).parent
 sys.path.insert(0, str(ROOT)); import analyze as A
+import families
+DATA = sys.argv[sys.argv.index("--data") + 1] if "--data" in sys.argv else "data-nocache"
+HW = sys.argv[sys.argv.index("--hw") + 1] if "--hw" in sys.argv else ("data-h100" if DATA == "data-nocache" else "")  # H100 data is Qwen 7B only
 
-runs = A.load(sorted(glob.glob(str(ROOT / "data-nocache" / "*.jsonl")))); ref = runs[A.REF]
-CFGS = ["fp16", "fp8", "int8-gptq", "int4-gptq", "int4-awq"]
-NAMES = {"fp16": "FP16", "fp8": "FP8", "int8-gptq": "INT8 GPTQ", "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ"}
+runs = A.load(sorted(glob.glob(str(ROOT / DATA / "*.jsonl")))); ref = runs[A.REF]
+CFGS = [c for c in families.ORDER if c != "bf16" and (c, 1, 0) in runs]
+NAMES = families.NAMES
 FP = {c: runs[(c, 1, 0)] for c in CFGS}
 NOISE = [k for k in runs if k[0] == "bf16" and k != A.REF and k[1] != 1]
 POS = {c: [k for k in runs if k[0] == c and k[1] == 64] for c in CFGS}
@@ -82,7 +85,7 @@ for c in CFGS:
 
 print("3. Attribution with a Bonferroni threshold, alpha = 1%/5 per fingerprint")
 score = {}
-hw = {("h100",) + k[1:]: v for k, v in A.load([str(ROOT / "data-h100" / "bf16.jsonl")]).items() if k[0] == "bf16"}
+hw = {("h100",) + k[1:]: v for k, v in A.load([str(ROOT / HW / "bf16.jsonl")]).items() if k[0] == "bf16"} if HW and (ROOT / HW / "bf16.jsonl").exists() else {}
 allruns = {**runs, **hw}
 tests = [(k, k[0]) for k in runs if k[0] in CFGS and k[1] == 64] + [(k, "bf16") for k in NOISE] + [(k, "bf16-h100") for k in hw]
 for k, _ in tests:
@@ -137,4 +140,4 @@ for c in CFGS:
     out["n_star"][c] = dict(mean_pos=mp, sd_pos=sp, mean_neg=mn, sd_neg=sn, n_star=nstar)
     print(f"   {NAMES[c]:10s} same {mp:.3f} sd {sp:.3f}   noise {mn:.3f} sd {sn:.3f}   predicted prompts for 99% at 1%: {nstar}")
 (ROOT / "results").mkdir(exist_ok=True)
-(ROOT / "results" / "robustness.json").write_text(json.dumps(out, indent=1, default=str))
+(ROOT / "results" / f"robustness-{DATA}.json").write_text(json.dumps(out, indent=1, default=str))

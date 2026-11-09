@@ -11,7 +11,8 @@ import numpy as np
 
 ROOT = pathlib.Path(__file__).parent
 REF = ("bf16", 1, 0)
-NAMES = {"bf16": "BF16", "fp16": "FP16", "fp8": "FP8", "int8-gptq": "INT8 GPTQ", "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ"}
+import families
+NAMES = dict(families.NAMES)
 
 def load(paths):
     runs = {}
@@ -272,6 +273,9 @@ def main(a):
     (ROOT / "results").mkdir(exist_ok=True)
     a.data = getattr(a, "data", "data")
     runs = load(sorted(p for p in glob.glob(str(ROOT / a.data / "*.jsonl")) if not pathlib.Path(p).name.startswith("api_")))
+    present = {k[0] for k in runs}
+    for c in [c for c in NAMES if c not in present]:
+        del NAMES[c]                     # each family has its own setups
     if REF not in runs:
         raise SystemExit("missing the reference run: collect bf16 with batch 1 first")
     ref = runs[REF]

@@ -11,10 +11,13 @@ import numpy as np
 import pathlib
 ROOT = pathlib.Path(__file__).parent
 sys.path.insert(0, str(ROOT)); import analyze as A
+import families
+DATA = sys.argv[sys.argv.index("--data") + 1] if "--data" in sys.argv else "data-nocache"
+HW = sys.argv[sys.argv.index("--hw") + 1] if "--hw" in sys.argv else ("data-h100" if DATA == "data-nocache" else "")  # H100 data is Qwen 7B only
 from sklearn.metrics import roc_auc_score
 
-runs = A.load(sorted(glob.glob(str(ROOT / "data-nocache" / "*.jsonl")))); ref = runs[A.REF]
-hw = {k: v for k, v in A.load([str(ROOT / "data-h100" / "bf16.jsonl")]).items() if k[0] == "bf16"}
+runs = A.load(sorted(glob.glob(str(ROOT / DATA / "*.jsonl")))); ref = runs[A.REF]
+hw = {k: v for k, v in A.load([str(ROOT / HW / "bf16.jsonl")]).items() if k[0] == "bf16"}
 cfgs = ["fp16", "fp8", "int8-gptq", "int4-gptq", "int4-awq"]
 noise = [k for k in runs if k[0] == "bf16" and k != A.REF and k[1] != 1]       # batched noise only
 
