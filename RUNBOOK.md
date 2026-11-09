@@ -178,3 +178,33 @@ Paste each results table to Claude. Claude then:
   relates to the prefix caching finding, model idiosyncrasies of Sun et al. (2025) and LLMmap of Pasquini et al.
   (2024);
 - reruns the style scan and the page check, and confirms that every number traces back to data on GitHub.
+
+## 11. Follow-up run: quantized setups for Muse Glimmer and Mistral on an H100
+
+vLLM 0.33 dropped bitsandbytes, and dynamic FP8 does not load on an A100, so the first run gave these two families only
+BF16 and the FP16 control. This run adds three quantized setups to each family, all on one H100:
+
+- **FP8**, native on the H100.
+- **INT8 weight-only**, vLLM's built-in `int8_per_channel_weight_only` mode.
+- **INT4 GPTQ**, which `quantize.py` builds locally with llm-compressor, calibrated on Dolly filler prompts and never on
+  the probes.
+
+These setups compute in BF16, so they also test the paper's mechanism, which predicts larger batch effects for them than
+for Qwen's FP16-computing checkpoints. The job also reruns BF16 and FP16 on the H100, so each family's data comes from
+one GPU, and it runs RUT on Mistral's new setups. Everything lands in folders ending in `-h100`, apart from the A100 data.
+
+1. Push the latest scripts from your laptop, the same way as in step 0.
+2. Deploy an **H100**, On-Demand, RunPod PyTorch, **250 GB** container disk, with at least **$25** of credit.
+3. On the pod, one line at a time:
+
+```bash
+cd ~ && git clone -q https://github.com/prithsk/quantprint-experiments && cd quantprint-experiments && ls jobs
+export HF_TOKEN=hf_YOUR_TOKEN_HERE
+export REPEATS=3
+bash run_gpu.sh jobs/h100_families.sh
+```
+
+About 4 hours. The job stops at once on any GPU other than an H100. A setup that fails to load is skipped and logged,
+so paste any SKIP or FAILED lines to Claude. When the log lists the results files, download
+`results-mistral-7b-h100.tar.gz`, `results-muse-glimmer-30b-h100.tar.gz` and `results-rut-mistral-7b-h100.tar.gz`,
+terminate the pod, push them with the step 8 commands and tell Claude.

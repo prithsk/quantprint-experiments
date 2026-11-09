@@ -1,0 +1,7 @@
+OK       bf16        Qwen/Qwen2.5-7B-Instruct
+OK       fp16        Qwen/Qwen2.5-7B-Instruct
+OK       int8-gptq   Qwen/Qwen2.5-7B-Instruct-GPTQ-Int8
+OK       int4-gptq   Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4
+OK       int4-awq    Qwen/Qwen2.5-7B-Instruct-AWQ
+
+READY: bf16,fp16,int8-gptq,int4-gptq,int4-awq

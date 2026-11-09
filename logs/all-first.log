@@ -1,0 +1,90 @@
+Installing, about 3 minutes the first time...
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+
+=================== jobs/h100_quant.sh ===================
+bf16 batch 1 repeat 0: 120 probes in 82 s
+bf16 batch 1 repeat 1: 120 probes in 80 s
+bf16 batch 64 repeat 0: 120 probes in 15 s
+bf16 batch 64 repeat 1: 120 probes in 15 s
+wrote /root/quantprint-experiments/data-a100q/bf16.jsonl
+fp16 batch 1 repeat 0: 120 probes in 80 s
+fp16 batch 1 repeat 1: 120 probes in 81 s
+fp16 batch 64 repeat 0: 120 probes in 16 s
+fp16 batch 64 repeat 1: 120 probes in 17 s
+wrote /root/quantprint-experiments/data-a100q/fp16.jsonl
+IndentationError: unexpected indent
+STOP: int8-gptq produced no data
+FAILED: jobs/h100_quant.sh (continuing)
+
+=================== jobs/rut.sh qwen2.5-7b ===================
+Traceback (most recent call last):
+  File "/root/quantprint-experiments/check_models.py", line 7, in <module>
+    import families
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+IndentationError: unexpected indent
+IndentationError: unexpected indent
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+FAILED: jobs/rut.sh qwen2.5-7b (continuing)
+cleared model cache
+
+=================== jobs/family.sh llama3.1-8b ===================
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+FAILED: jobs/family.sh llama3.1-8b (continuing)
+cleared model cache
+
+=================== jobs/family.sh mistral-7b ===================
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+FAILED: jobs/family.sh mistral-7b (continuing)
+
+=================== jobs/rut.sh mistral-7b ===================
+Traceback (most recent call last):
+  File "/root/quantprint-experiments/check_models.py", line 7, in <module>
+    import families
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+IndentationError: unexpected indent
+IndentationError: unexpected indent
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+FAILED: jobs/rut.sh mistral-7b (continuing)
+cleared model cache
+
+=================== jobs/family.sh qwen2.5-32b ===================
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+FAILED: jobs/family.sh qwen2.5-32b (continuing)
+cleared model cache
+
+=================== jobs/sglang.sh ===================
+Installing SGLang, about 5 minutes the first time...
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/root/quantprint-experiments/families.py", line 45
+    "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+IndentationError: unexpected indent
+FAILED: jobs/sglang.sh (continuing)
+
+Results in /workspace:
+
+FAILED: the last lines above show why

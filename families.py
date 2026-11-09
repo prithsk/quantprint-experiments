@@ -1,6 +1,7 @@
 """Model families and their serving setups. Each setup is one vLLM configuration of the same model.
   bf16 is always the reference, and fp16 is a control that changes arithmetic without quantizing.
-  'bnb' setups quantize in flight with bitsandbytes, so they need no third-party checkpoint.
+  vLLM 0.33 dropped bitsandbytes, so Muse and Mistral use vLLM's own INT8 weight-only mode and INT4 GPTQ checkpoints
+  that quantize.py builds locally with llm-compressor into ckpt/. Those setups compute in BF16.
 Run check_models.py on the GPU machine first: it confirms every repository exists and that your token can reach it.
 """
 FAMILIES = {
@@ -27,7 +28,8 @@ FAMILIES = {
         "bf16":     dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization=None, dtype="bfloat16"),
         "fp16":     dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization=None, dtype="float16"),
         "fp8":      dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="fp8", dtype="bfloat16"),
-        "int4-bnb": dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="bitsandbytes", dtype="bfloat16"),
+        "int8-wo":  dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="int8_per_channel_weight_only", dtype="bfloat16"),
+        "int4-llmc": dict(model="ckpt/mistral-7b-w4a16", quantization=None, dtype="bfloat16"),
     },
     # Meta's Muse Glimmer, released openly under Apache 2.0, so no license approval is needed. About 30B parameters with a
     # vision encoder; BF16 needs over 55 GB, so use an 80 GB GPU. Meta's own quantized builds are GGUF and ExecuTorch,
@@ -36,7 +38,8 @@ FAMILIES = {
         "bf16":     dict(model="meta-models/Muse-Glimmer-30B", quantization=None, dtype="bfloat16"),
         "fp16":     dict(model="meta-models/Muse-Glimmer-30B", quantization=None, dtype="float16"),
         "fp8":      dict(model="meta-models/Muse-Glimmer-30B", quantization="fp8", dtype="bfloat16"),
-        "int4-bnb": dict(model="meta-models/Muse-Glimmer-30B", quantization="bitsandbytes", dtype="bfloat16"),
+        "int8-wo":  dict(model="meta-models/Muse-Glimmer-30B", quantization="int8_per_channel_weight_only", dtype="bfloat16"),
+        "int4-llmc": dict(model="ckpt/muse-glimmer-30b-w4a16", quantization=None, dtype="bfloat16"),
     },
     # A larger model. BF16 needs about 66 GB, so use an 80 GB A100 or H100.
     "qwen2.5-32b": {
@@ -47,8 +50,8 @@ FAMILIES = {
         "int4-awq":  dict(model="Qwen/Qwen2.5-32B-Instruct-AWQ", quantization=None, dtype="float16"),
     },
 }
-NAMES = {"bf16": "BF16", "fp16": "FP16", "fp8": "FP8", "int8-gptq": "INT8 GPTQ", "int8-w8a16": "INT8 W8A16",
-         "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-bnb": "INT4 bitsandbytes"}
+NAMES = {"bf16": "BF16", "fp16": "FP16", "fp8": "FP8", "int8-gptq": "INT8 GPTQ", "int8-w8a16": "INT8 W8A16", "int8-wo": "INT8 weight-only",
+         "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-llmc": "INT4 GPTQ, llm-compressor", "int4-bnb": "INT4 bitsandbytes"}
 ORDER = list(NAMES)
 
 def configs(family):
@@ -57,5 +60,7 @@ def configs(family):
     return FAMILIES[family]
 
 def data_dir(family):
-    """Qwen 7B keeps its original folder so every published number still reproduces."""
-    return "data-nocache" if family == "qwen2.5-7b" else f"data-{family}"
+    """Qwen 7B keeps its original folder so every published number still reproduces. DATA_SUFFIX keeps runs from another
+    GPU in their own folder, for example data-mistral-7b-h100."""
+    import os
+    return "data-nocache" if family == "qwen2.5-7b" else f"data-{family}{os.environ.get('DATA_SUFFIX', '')}"

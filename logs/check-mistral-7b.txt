@@ -1,0 +1,5 @@
+OK       bf16        mistralai/Mistral-7B-Instruct-v0.3
+OK       fp16        mistralai/Mistral-7B-Instruct-v0.3
+OK       int4-bnb    mistralai/Mistral-7B-Instruct-v0.3
+
+READY: bf16,fp16,int4-bnb

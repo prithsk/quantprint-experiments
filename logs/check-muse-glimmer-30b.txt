@@ -1,0 +1,5 @@
+OK       bf16        meta-models/Muse-Glimmer-30B
+OK       fp16        meta-models/Muse-Glimmer-30B
+OK       int4-bnb    meta-models/Muse-Glimmer-30B
+
+READY: bf16,fp16,int4-bnb

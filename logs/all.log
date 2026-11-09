@@ -1,0 +1,444 @@
+Installing, about 3 minutes the first time...
+GPU: NVIDIA A100-SXM4-80GB, 81920 MiB
+
+=================== jobs/h100_quant.sh ===================
+bf16 already collected
+fp16 already collected
+fp8 already collected
+int8-gptq batch 1 repeat 0: 120 probes in 52 s
+int8-gptq batch 1 repeat 1: 120 probes in 52 s
+int8-gptq batch 1 repeat 2: 120 probes in 52 s
+int8-gptq batch 64 repeat 0: 120 probes in 14 s
+int8-gptq batch 64 repeat 1: 120 probes in 13 s
+int8-gptq batch 64 repeat 2: 120 probes in 13 s
+wrote /root/quantprint-experiments/data-a100q/int8-gptq.jsonl
+int4-gptq batch 1 repeat 0: 120 probes in 40 s
+int4-gptq batch 1 repeat 1: 120 probes in 39 s
+int4-gptq batch 1 repeat 2: 120 probes in 41 s
+int4-gptq batch 64 repeat 0: 120 probes in 13 s
+int4-gptq batch 64 repeat 1: 120 probes in 13 s
+int4-gptq batch 64 repeat 2: 120 probes in 14 s
+wrote /root/quantprint-experiments/data-a100q/int4-gptq.jsonl
+int4-awq batch 1 repeat 0: 120 probes in 39 s
+int4-awq batch 1 repeat 1: 120 probes in 39 s
+int4-awq batch 1 repeat 2: 120 probes in 39 s
+int4-awq batch 64 repeat 0: 120 probes in 13 s
+int4-awq batch 64 repeat 1: 120 probes in 13 s
+int4-awq batch 64 repeat 2: 120 probes in 14 s
+wrote /root/quantprint-experiments/data-a100q/int4-awq.jsonl
+# Other setup: data-a100q scored against data-nocache
+
+Fingerprints: FP16, FP8, INT8 GPTQ, INT4 GPTQ, INT4 AWQ. False positive rate 1% per test.
+
+## Detection of each quantized setup by its own fingerprint
+
+| Setup | runs | mean score | 5 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|---|
+| FP16 | 4 | 0.987 | 100% | 100% | 100% |
+| INT8 GPTQ | 6 | 0.989 | 100% | 100% | 100% |
+| INT4 GPTQ | 6 | 1.000 | 100% | 100% | 100% |
+| INT4 AWQ | 6 | 1.000 | 100% | 100% | 100% |
+
+## False alarms on honest BF16 from the other setup
+
+| Fingerprint | 5 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|
+| FP16 | 2% | 1% | 2% |
+| FP8 | 1% | 1% | 0% |
+| INT8 GPTQ | 0% | 0% | 1% |
+| INT4 GPTQ | 2% | 1% | 1% |
+| INT4 AWQ | 2% | 3% | 13% |
+
+## Attribution with a Bonferroni threshold, 0.20% per fingerprint
+
+| True setup | 5 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|
+| BF16 | 98.2% | 98.4% | 99.9% |
+| FP16 | 100.0% | 100.0% | 100.0% |
+| INT8 GPTQ | 100.0% | 100.0% | 100.0% |
+| INT4 GPTQ | 100.0% | 100.0% | 100.0% |
+| INT4 AWQ | 100.0% | 100.0% | 100.0% |
+Saved /workspace/results-data-a100q.tar.gz
+OK: jobs/h100_quant.sh
+
+=================== jobs/rut.sh qwen2.5-7b ===================
+OK       bf16        Qwen/Qwen2.5-7B-Instruct
+OK       fp16        Qwen/Qwen2.5-7B-Instruct
+OK       int8-gptq   Qwen/Qwen2.5-7B-Instruct-GPTQ-Int8
+OK       int4-gptq   Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4
+OK       int4-awq    Qwen/Qwen2.5-7B-Instruct-AWQ
+
+READY: bf16,fp16,int8-gptq,int4-gptq,int4-awq
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/target-bf16.jsonl: 300 prompts x 1 responses
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/target-fp16.jsonl: 300 prompts x 1 responses
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/target-int8-gptq.jsonl: 300 prompts x 1 responses
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/target-int4-gptq.jsonl: 300 prompts x 1 responses
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/target-int4-awq.jsonl: 300 prompts x 1 responses
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/reference-bf16.jsonl: 300 prompts x 100 responses
+(EngineCore pid=12098) INFO 11-09 05:53:45 [core.py:139] Initializing a V1 LLM engine (v0.33.0) with config: model='Qwen/Qwen2.5-7B-Instruct', speculative_config=None, tokenizer='Qwen/Qwen2.5-7B-Instruct', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, quantization_config=None, enforce_eager=False, aux_output_config=AuxOutputConfig(enable_return_routed_experts=False, max_bytes=None), kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, custom_histogram_buckets=None, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=Qwen/Qwen2.5-7B-Instruct, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::qwen4_exp_ple_short_conv', 'vllm::qwen4_exp_qsa_with_output', 'vllm::qwen4_exp_qsa_prepare_with_output', 'vllm::linear_attention', 'vllm::qwen_gdn_attention_core', 'vllm::qwen_gdn_attention_core_fused_norm_packed', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'cudagraph_decoder_replay': True, 'decoder_replay_cudagraph_capture_sizes': [], 'decoder_replay_trim_threshold': 768, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['triton', 'native']), enable_flashinfer_autotune=True, enable_rocm_segmented_attn_autotune=False, enable_cutedsl_warmup=True, enable_jit_warmup=True, monokernel=False, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+(EngineCore pid=12098) INFO 11-09 05:53:50 [cuda.py:508] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=12098) INFO 11-09 05:54:20 [monitor.py:91] [backbone] Initial profiling/warmup run took 0.02 s
+(EngineCore pid=12098) INFO 11-09 05:54:30 [gpu_worker.py:787] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.8500 is equivalent to --gpu-memory-utilization=0.8448 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.8552. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore pid=12098) INFO 11-09 05:54:41 [core.py:405] init engine (profile, create kv cache, warmup model) took 43.51 s (compilation: 20.14 s)
+scoring 31500 responses
+  2000 of 31500
+  4000 of 31500
+  6000 of 31500
+  8000 of 31500
+  10000 of 31500
+  12000 of 31500
+  14000 of 31500
+  16000 of 31500
+  18000 of 31500
+  20000 of 31500
+  22000 of 31500
+  24000 of 31500
+  26000 of 31500
+  28000 of 31500
+  30000 of 31500
+  31500 of 31500
+wrote /root/quantprint-experiments/data-rut-qwen2.5-7b/scores.jsonl
+Fatal Python error: PyEval_SaveThread: the function must be called with the GIL held, after Python initialization and before Python finalization, but the GIL is released (the current Python thread state is NULL)
+Extension modules: numpy._core._multiarray_umath, numpy.linalg._umath_linalg, torch._C, torch._C._dynamo.autograd_compiler, torch._C._dynamo.eval_frame, torch._C._dynamo.guards, torch._C._dynamo.utils, torch._C._fft, torch._C._linalg, torch._C._nested, torch._C._nn, torch._C._sparse, torch._C._special, cuda.bindings._internal.utils, cuda.bindings._internal.driver, cuda.bindings.cydriver, cuda.bindings.driver, cuda.bindings._internal.runtime_ptds, cuda.bindings._internal.runtime, cuda.bindings.cyruntime, cuda.bindings.runtime, numpy.random._common, numpy.random.bit_generator, numpy.random._bounded_integers, numpy.random._pcg64, numpy.random._mt19937, numpy.random._generator, numpy.random._philox, numpy.random._sfc64, numpy.random.mtrand, markupsafe._speedups, msgspec._core, regex._regex, xxhash._xxhash, psutil._psutil_linux, zmq.backend.cython._zmq, PIL._imaging, yaml._yaml, PIL._imagingft, _cyutility, scipy._cyutility, scipy._lib._ccallback_c, scipy.linalg._fblas, scipy.linalg._flapack, scipy.linalg._batched_linalg, charset_normalizer.md, charset_normalizer.cd, scipy.linalg._cythonized_array_utils, scipy.linalg._solve_toeplitz, scipy.linalg._internal_matfuncs, scipy.linalg._linalg_pythran, scipy.linalg.cython_blas, scipy.linalg.cython_lapack, scipy.linalg._decomp_update, scipy.sparse._sparsetools, _csparsetools, scipy.sparse._csparsetools, scipy.sparse.linalg._dsolve._superlu, scipy.sparse.linalg._eigen.arpack._arpacklib, scipy.sparse.linalg._propack, scipy.optimize._group_columns, scipy._lib.messagestream, scipy.optimize._trlib._trlib, scipy.optimize._lbfgsb, _moduleTNC, scipy.optimize._moduleTNC, scipy.optimize._slsqplib, scipy.optimize._minpack, scipy.optimize._lsq.givens_elimination, scipy.optimize._zeros, scipy._lib._uarray._uarray, scipy.special._ufuncs_cxx, scipy.special._ellip_harm_2, scipy.special._special_ufuncs, scipy.special._gufuncs, scipy.special._ufuncs, scipy.special._specfun, scipy.special._comb, scipy.linalg._decomp_interpolative, scipy.optimize._bglu_dense, scipy.optimize._lsap, scipy.spatial._ckdtree, scipy.spatial._hausdorff, scipy.spatial._distance_wrap, scipy.spatial._qhull, scipy.spatial._voronoi, scipy.spatial.transform._rotation_cy, scipy.spatial.transform._rigid_transform_cy, scipy.optimize._direct, sklearn.__check_build._check_build, scipy.integrate._odepack, scipy.integrate._quadpack, scipy.integrate._vode, scipy.integrate._dop, scipy.interpolate._fitpack, scipy.interpolate._dierckx, scipy.interpolate._ppoly, scipy.interpolate._interpnd, scipy.interpolate._rbfinterp_pythran, scipy.interpolate._rgi_cython, scipy.special.cython_special, scipy.stats._stats, scipy.stats._biasedurn, scipy.stats._levy_stable.levyst, scipy.stats._stats_pythran, scipy.stats._ansari_swilk_statistics, scipy.sparse.csgraph._tools, scipy.sparse.csgraph._shortest_path, scipy.sparse.csgraph._traversal, scipy.sparse.csgraph._min_spanning_tree, scipy.sparse.csgraph._flow, scipy.sparse.csgraph._matching, scipy.sparse.csgraph._reordering, scipy.stats._sobol, scipy.stats._qmc_cy, scipy.stats._rcont.rcont, scipy.stats._qmvnt_cy, scipy.ndimage._nd_image, scipy.ndimage._rank_filter_1d, _ni_label, scipy.ndimage._ni_label, pyarrow.lib, pandas._libs._cyutility, pandas._libs.tslibs.ccalendar, pandas._libs.tslibs.np_datetime, pandas._libs.tslibs.dtypes, pandas._libs.tslibs.base, pandas._libs.tslibs.nattype, pandas._libs.tslibs.timezones, pandas._libs.properties, pandas._libs.tslibs.fields, pandas._libs.tslibs.timedeltas, pandas._libs.tslibs.tzconversion, pandas._libs.tslibs.timestamps, pandas._libs.tslibs.offsets, pandas._libs.tslibs.strptime, pandas._libs.tslibs.parsing, pandas._libs.tslibs.conversion, pandas._libs.tslibs.period, pandas._libs.tslibs.vectorized, pandas._libs.ops_dispatch, pandas._libs.missing, pandas._libs.hashtable, pandas._libs.algos, pandas._libs.interval, pandas._libs.lib, pyarrow._compute, pandas._libs.ops, pandas._libs.groupby, pandas._libs.hashing, pandas._libs.arrays, pandas._libs.tslib, pandas._libs.sparse, pandas._libs.internals, pandas._libs.index, pandas._libs.writers, pandas._libs.join, pandas._libs.indexing, pandas._libs.window.aggregations, pandas._libs.window.indexers, pandas._libs.reshape, pandas._libs._ujson, pandas._libs.parsers, pandas._libs.testing, sklearn._cyutility, sklearn.utils._isfinite, sklearn.utils.sparsefuncs_fast, sklearn.utils.murmurhash, sklearn.utils._openmp_helpers, sklearn.metrics.cluster._expected_mutual_info_fast, sklearn.metrics._dist_metrics, sklearn.metrics._pairwise_distances_reduction._datasets_pair, sklearn.utils._cython_blas, sklearn.metrics._pairwise_distances_reduction._base, sklearn.metrics._pairwise_distances_reduction._middle_term_computer, sklearn.utils._heap, sklearn.utils._sorting, sklearn.metrics._pairwise_distances_reduction._argkmin, sklearn.metrics._pairwise_distances_reduction._argkmin_classmode, sklearn.utils._vector_sentinel, sklearn.metrics._pairwise_distances_reduction._radius_neighbors, sklearn.metrics._pairwise_distances_reduction._radius_neighbors_classmode, sklearn.metrics._pairwise_fast, sklearn.preprocessing._csr_polynomial_expansion, sklearn.preprocessing._target_encoder_fast, multidict._multidict, yarl._quoting_c, propcache._helpers_c, aiohttp._http_writer, aiohttp._http_parser, aiohttp._websocket.mask, aiohttp._websocket.reader_c, frozenlist._frozenlist, requests.packages.charset_normalizer.md, requests.packages.chardet.md, requests.packages.charset_normalizer.cd, requests.packages.chardet.cd, pybase64._pybase64, scipy.signal._sigtools, scipy.signal._max_len_seq_inner, scipy.signal._upfirdn_apply, scipy.signal._spline, scipy.signal._sosfilt, scipy.signal._peak_finding_utils, uvloop.loop, grpc._cython.cygrpc, google._upb._message, tvm_ffi.core, pyarrow._acero, pyarrow._fs, pyarrow._csv, pyarrow._json, pyarrow._substrait, pyarrow._dataset, pyarrow._dataset_orc, pyarrow._parquet, pyarrow._azurefs, pyarrow._hdfs, pyarrow._gcsfs, pyarrow._s3fs, pyarrow._parquet_encryption, pyarrow._dataset_parquet_encryption, pyarrow._dataset_parquet, scipy.io.matlab._mio_utils, scipy.io.matlab._streams, scipy.io.matlab._mio5_utils (total: 226)
+# RUT and QuantPrint on qwen2.5-7b
+
+RUT: 300 prompts with 100 reference responses each. A BF16 target row is a false positive rate, and every other row is detection power.
+
+## alpha = 5%
+
+| Setup | Test | 5 prompts | 10 prompts | 20 prompts | 50 prompts | 100 prompts |
+|---|---|---|---|---|---|---|
+| BF16 | RUT | 5% | 5% | 8% | 13% | 22% |
+| FP16 | RUT | 5% | 6% | 7% | 12% | 15% |
+| FP16 | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+| INT8 GPTQ | RUT | 7% | 3% | 5% | 4% | 4% |
+| INT8 GPTQ | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+| INT4 GPTQ | RUT | 30% | 51% | 83% | 100% | 100% |
+| INT4 GPTQ | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+| INT4 AWQ | RUT | 36% | 59% | 85% | 100% | 100% |
+| INT4 AWQ | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+
+## alpha = 1%
+
+| Setup | Test | 5 prompts | 10 prompts | 20 prompts | 50 prompts | 100 prompts |
+|---|---|---|---|---|---|---|
+| BF16 | RUT | 1% | 1% | 1% | 3% | 5% |
+| FP16 | RUT | 1% | 1% | 1% | 3% | 5% |
+| FP16 | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+| INT8 GPTQ | RUT | 1% | 0% | 1% | 0% | 1% |
+| INT8 GPTQ | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+| INT4 GPTQ | RUT | 12% | 31% | 62% | 98% | 100% |
+| INT4 GPTQ | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+| INT4 AWQ | RUT | 14% | 34% | 73% | 100% | 100% |
+| INT4 AWQ | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+
+Saved /workspace/results-rut-qwen2.5-7b.tar.gz
+OK: jobs/rut.sh qwen2.5-7b
+cleared model cache
+
+=================== jobs/family.sh muse-glimmer-30b ===================
+OK       bf16        meta-models/Muse-Glimmer-30B
+OK       fp16        meta-models/Muse-Glimmer-30B
+OK       int4-bnb    meta-models/Muse-Glimmer-30B
+
+READY: bf16,fp16,int4-bnb
+bf16 batch 1 repeat 0: 120 probes in 272 s
+bf16 batch 1 repeat 1: 120 probes in 271 s
+bf16 batch 1 repeat 2: 120 probes in 271 s
+bf16 batch 8 repeat 0: 120 probes in 36 s
+bf16 batch 8 repeat 1: 120 probes in 36 s
+bf16 batch 8 repeat 2: 120 probes in 36 s
+bf16 batch 64 repeat 0: 120 probes in 59 s
+bf16 batch 64 repeat 1: 120 probes in 58 s
+bf16 batch 64 repeat 2: 120 probes in 58 s
+wrote /root/quantprint-experiments/data-muse-glimmer-30b/bf16.jsonl
+fp16 batch 1 repeat 0: 120 probes in 269 s
+fp16 batch 1 repeat 1: 120 probes in 269 s
+fp16 batch 1 repeat 2: 120 probes in 269 s
+fp16 batch 64 repeat 0: 120 probes in 55 s
+fp16 batch 64 repeat 1: 120 probes in 54 s
+fp16 batch 64 repeat 2: 120 probes in 55 s
+wrote /root/quantprint-experiments/data-muse-glimmer-30b/fp16.jsonl
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+  Value error, Unknown quantization method: bitsandbytes. Must be one of ['awq', 'auto_awq', 'fp8', 'fbgemm_fp8', 'fp_quant', 'modelopt', 'modelopt_fp4', 'modelopt_mxfp8', 'modelopt_mixed', 'auto_gptq', 'gptq', 'gptq_marlin', 'awq_marlin', 'humming', 'compressed-tensors', 'experts_int8', 'quark', 'moe_wna16', 'torchao', 'inc', 'mxfp4', 'gpt_oss_mxfp4', 'deepseek_v4_fp8', 'online', 'fp8_per_tensor', 'fp8_per_block', 'fp8_per_channel', 'int8_per_channel_weight_only', 'nvfp4_per_token', 'mxfp8']. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+SKIP: int4-bnb produced no data, so the analysis leaves it out; its error is in the lines above
+## RQ1: shift from each precision against the noise floor
+
+| Comparison | Mean abs shift, nats | AUC against noise |
+|---|---|---|
+| Same precision, repeat at batch 1 | 0.00000 | --- |
+| Same precision, batch 1 vs 8 | 0.00592 | --- |
+| Same precision, batch 1 vs 64 | 0.00612 | --- |
+| BF16 vs FP16 (control) | 0.00575 | 0.604 |
+
+## Systematic or random: agreement of per-token shifts across two runs at different batch sizes, the fair test
+## Direction detector: correlation with each precision's fingerprint, power at 1% false positives
+
+| Precision | Mean score, same precision | Mean score, BF16 noise | 5 prompts | 10 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|---|---|
+| FP16 | 0.986 | 0.540 | 100% | 100% | 100% | 100% |
+
+## RQ2: attribution accuracy on a held-out batch size
+bf16       arithmetic BF16                             batch-64 vs own batch-1, mean |shift| 0.00612 nats over 19,824 tokens
+fp16       arithmetic FP16                             batch-64 vs own batch-1, mean |shift| 0.00085 nats over 22,345 tokens
+
+ratio BF16 / FP16 batch effect: 7.2x
+   sigma 0.001: FP16 100/100
+   sigma 0.005: FP16 94/100
+   sigma 0.01: FP16 82/100
+   sigma 0.02: FP16 50/97
+   sigma 0.05: FP16 11/47
+1c. Fewer tokens per prompt
+   8 tokens: FP16 38/85
+   16 tokens: FP16 35/87
+   32 tokens: FP16 94/100
+   64 tokens: FP16 100/100
+2. Mixed serving: each prompt quantized with probability f, detection at 20 / 50 prompts
+   FP16       f=0.1: 5/13  f=0.25: 32/65  f=0.5: 86/99
+3. Attribution with a Bonferroni threshold, alpha = 1%/5 per fingerprint
+   alpha per fingerprint 0.010:
+      n=5: fp16 100.0%  bf16 99.4%
+      n=20: fp16 100.0%  bf16 99.0%
+      n=50: fp16 100.0%  bf16 99.2%
+   alpha per fingerprint 0.002:
+      n=5: fp16 100.0%  bf16 99.9%
+      n=20: fp16 100.0%  bf16 99.8%
+      n=50: fp16 100.0%  bf16 99.7%
+4a. Bootstrap 95% intervals for detection at 5 prompts, resampling prompts
+   FP16       95% interval 100% to 100%
+4b. Sample-size analysis: per-prompt direction scores, Gaussian approximation
+   FP16       same 0.986 sd 0.017   noise 0.540 sd 0.320   predicted prompts for 99% at 1%: 4
+Saved /workspace/results-muse-glimmer-30b.tar.gz
+OK: jobs/family.sh muse-glimmer-30b
+cleared model cache
+
+=================== jobs/family.sh mistral-7b ===================
+OK       bf16        mistralai/Mistral-7B-Instruct-v0.3
+OK       fp16        mistralai/Mistral-7B-Instruct-v0.3
+OK       int4-bnb    mistralai/Mistral-7B-Instruct-v0.3
+
+READY: bf16,fp16,int4-bnb
+bf16 batch 1 repeat 0: 120 probes in 83 s
+bf16 batch 1 repeat 1: 120 probes in 82 s
+bf16 batch 1 repeat 2: 120 probes in 82 s
+bf16 batch 8 repeat 0: 120 probes in 11 s
+bf16 batch 8 repeat 1: 120 probes in 11 s
+bf16 batch 8 repeat 2: 120 probes in 12 s
+bf16 batch 64 repeat 0: 120 probes in 20 s
+bf16 batch 64 repeat 1: 120 probes in 17 s
+bf16 batch 64 repeat 2: 120 probes in 19 s
+wrote /root/quantprint-experiments/data-mistral-7b/bf16.jsonl
+fp16 batch 1 repeat 0: 120 probes in 83 s
+fp16 batch 1 repeat 1: 120 probes in 84 s
+fp16 batch 1 repeat 2: 120 probes in 82 s
+fp16 batch 64 repeat 0: 120 probes in 14 s
+fp16 batch 64 repeat 1: 120 probes in 15 s
+fp16 batch 64 repeat 2: 120 probes in 16 s
+wrote /root/quantprint-experiments/data-mistral-7b/fp16.jsonl
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+  Value error, Unknown quantization method: bitsandbytes. Must be one of ['awq', 'auto_awq', 'fp8', 'fbgemm_fp8', 'fp_quant', 'modelopt', 'modelopt_fp4', 'modelopt_mxfp8', 'modelopt_mixed', 'auto_gptq', 'gptq', 'gptq_marlin', 'awq_marlin', 'humming', 'compressed-tensors', 'experts_int8', 'quark', 'moe_wna16', 'torchao', 'inc', 'mxfp4', 'gpt_oss_mxfp4', 'deepseek_v4_fp8', 'online', 'fp8_per_tensor', 'fp8_per_block', 'fp8_per_channel', 'int8_per_channel_weight_only', 'nvfp4_per_token', 'mxfp8']. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+SKIP: int4-bnb produced no data, so the analysis leaves it out; its error is in the lines above
+## RQ1: shift from each precision against the noise floor
+
+| Comparison | Mean abs shift, nats | AUC against noise |
+|---|---|---|
+| Same precision, repeat at batch 1 | 0.00000 | --- |
+| Same precision, batch 1 vs 8 | 0.00676 | --- |
+| Same precision, batch 1 vs 64 | 0.00672 | --- |
+| BF16 vs FP16 (control) | 0.00667 | 0.617 |
+
+## Systematic or random: agreement of per-token shifts across two runs at different batch sizes, the fair test
+## Direction detector: correlation with each precision's fingerprint, power at 1% false positives
+
+| Precision | Mean score, same precision | Mean score, BF16 noise | 5 prompts | 10 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|---|---|
+| FP16 | 0.987 | 0.624 | 100% | 100% | 100% | 100% |
+
+## RQ2: attribution accuracy on a held-out batch size
+bf16       arithmetic BF16                             batch-64 vs own batch-1, mean |shift| 0.00672 nats over 20,204 tokens
+fp16       arithmetic FP16                             batch-64 vs own batch-1, mean |shift| 0.00096 nats over 22,660 tokens
+
+ratio BF16 / FP16 batch effect: 7.0x
+   sigma 0.001: FP16 100/100
+   sigma 0.005: FP16 100/100
+   sigma 0.01: FP16 90/100
+   sigma 0.02: FP16 25/93
+   sigma 0.05: FP16 3/13
+1c. Fewer tokens per prompt
+   8 tokens: FP16 96/100
+   16 tokens: FP16 100/100
+   32 tokens: FP16 100/100
+   64 tokens: FP16 100/100
+2. Mixed serving: each prompt quantized with probability f, detection at 20 / 50 prompts
+   FP16       f=0.1: 12/29  f=0.25: 55/87  f=0.5: 94/100
+3. Attribution with a Bonferroni threshold, alpha = 1%/5 per fingerprint
+   alpha per fingerprint 0.010:
+      n=5: fp16 100.0%  bf16 99.0%
+      n=20: fp16 100.0%  bf16 98.3%
+      n=50: fp16 100.0%  bf16 98.5%
+   alpha per fingerprint 0.002:
+      n=5: fp16 100.0%  bf16 99.8%
+      n=20: fp16 100.0%  bf16 99.4%
+      n=50: fp16 100.0%  bf16 99.5%
+4a. Bootstrap 95% intervals for detection at 5 prompts, resampling prompts
+   FP16       95% interval 100% to 100%
+4b. Sample-size analysis: per-prompt direction scores, Gaussian approximation
+   FP16       same 0.987 sd 0.008   noise 0.624 sd 0.197   predicted prompts for 99% at 1%: 2
+Saved /workspace/results-mistral-7b.tar.gz
+OK: jobs/family.sh mistral-7b
+
+=================== jobs/rut.sh mistral-7b ===================
+OK       bf16        mistralai/Mistral-7B-Instruct-v0.3
+OK       fp16        mistralai/Mistral-7B-Instruct-v0.3
+OK       int4-bnb    mistralai/Mistral-7B-Instruct-v0.3
+
+READY: bf16,fp16,int4-bnb
+wrote /root/quantprint-experiments/data-rut-mistral-7b/target-bf16.jsonl: 300 prompts x 1 responses
+wrote /root/quantprint-experiments/data-rut-mistral-7b/target-fp16.jsonl: 300 prompts x 1 responses
+pydantic_core._pydantic_core.ValidationError: 1 validation error for ModelConfig
+  Value error, Unknown quantization method: bitsandbytes. Must be one of ['awq', 'auto_awq', 'fp8', 'fbgemm_fp8', 'fp_quant', 'modelopt', 'modelopt_fp4', 'modelopt_mxfp8', 'modelopt_mixed', 'auto_gptq', 'gptq', 'gptq_marlin', 'awq_marlin', 'humming', 'compressed-tensors', 'experts_int8', 'quark', 'moe_wna16', 'torchao', 'inc', 'mxfp4', 'gpt_oss_mxfp4', 'deepseek_v4_fp8', 'online', 'fp8_per_tensor', 'fp8_per_block', 'fp8_per_channel', 'int8_per_channel_weight_only', 'nvfp4_per_token', 'mxfp8']. [type=value_error, input_value=ArgsKwargs((), {'model': ...nderer_num_workers': 1}), input_type=ArgsKwargs]
+    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+wrote /root/quantprint-experiments/data-rut-mistral-7b/reference-bf16.jsonl: 300 prompts x 100 responses
+(EngineCore pid=20952) INFO 11-09 07:07:58 [core.py:139] Initializing a V1 LLM engine (v0.33.0) with config: model='mistralai/Mistral-7B-Instruct-v0.3', speculative_config=None, tokenizer='mistralai/Mistral-7B-Instruct-v0.3', skip_tokenizer_init=False, tokenizer_mode=auto, revision=main, tokenizer_revision=main, trust_remote_code=False, dtype=torch.bfloat16, max_seq_len=4096, download_dir=None, load_format=auto, tensor_parallel_size=1, pipeline_parallel_size=1, data_parallel_size=1, decode_context_parallel_size=1, dcp_comm_backend=ag_rs, disable_custom_all_reduce=False, quantization=None, quantization_config=None, enforce_eager=False, aux_output_config=AuxOutputConfig(enable_return_routed_experts=False, max_bytes=None), kv_cache_dtype=auto, device_config=cuda, structured_outputs_config=StructuredOutputsConfig(backend='auto', disable_any_whitespace=False, disable_additional_properties=False, reasoning_parser='', reasoning_parser_plugin='', enable_in_reasoning=False), observability_config=ObservabilityConfig(show_hidden_metrics_for_version=None, otlp_traces_endpoint=None, collect_detailed_traces=None, per_request_spec_decode_metrics='none', kv_cache_metrics=False, kv_cache_metrics_sample=0.01, custom_histogram_buckets=None, cudagraph_metrics=False, enable_layerwise_nvtx_tracing=False, enable_mfu_metrics=False, enable_mm_processor_stats=False, enable_logging_iteration_details=False, jit_monitor_mode='warn', jit_monitor_verbose=False), seed=0, served_model_name=mistralai/Mistral-7B-Instruct-v0.3, enable_prefix_caching=False, enable_chunked_prefill=True, pooler_config=None, compilation_config={'mode': <CompilationMode.VLLM_COMPILE: 3>, 'debug_dump_path': None, 'cache_dir': '', 'compile_cache_save_format': 'binary', 'backend': 'inductor', 'custom_ops': ['none'], 'ir_enable_torch_wrap': True, 'splitting_ops': ['vllm::unified_attention_with_output', 'vllm::unified_mla_attention_with_output', 'vllm::mamba_mixer2', 'vllm::mamba_mixer', 'vllm::short_conv', 'vllm::qwen4_exp_ple_short_conv', 'vllm::qwen4_exp_qsa_with_output', 'vllm::qwen4_exp_qsa_prepare_with_output', 'vllm::linear_attention', 'vllm::qwen_gdn_attention_core', 'vllm::qwen_gdn_attention_core_fused_norm_packed', 'vllm::gdn_attention_core_xpu', 'vllm::olmo_hybrid_gdn_full_forward', 'vllm::sparse_attn_indexer', 'vllm::rocm_aiter_sparse_attn_indexer', 'vllm::deepseek_v4_attention', 'vllm::hpc_rope_norm_forward', 'vllm::unified_kv_cache_update', 'vllm::unified_mla_kv_cache_update'], 'compile_mm_encoder': False, 'cudagraph_mm_encoder': False, 'encoder_cudagraph_token_budgets': [], 'encoder_cudagraph_max_vision_items_per_batch': 0, 'encoder_cudagraph_max_frames_per_batch': None, 'cudagraph_decoder_replay': True, 'decoder_replay_cudagraph_capture_sizes': [], 'decoder_replay_trim_threshold': 768, 'compile_sizes': [], 'compile_ranges_endpoints': [8192], 'inductor_compile_config': {'enable_auto_functionalized_v2': False, 'combo_kernels': True, 'benchmark_combo_kernel': True}, 'inductor_passes': {}, 'cudagraph_mode': <CUDAGraphMode.FULL_AND_PIECEWISE: (2, 1)>, 'cudagraph_num_of_warmups': 1, 'cudagraph_capture_sizes': [1, 2, 4, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160, 168, 176, 184, 192, 200, 208, 216, 224, 232, 240, 248, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432, 448, 464, 480, 496, 512], 'cudagraph_copy_inputs': False, 'cudagraph_specialize_lora': True, 'use_inductor_graph_partition': False, 'pass_config': {'fuse_norm_quant': False, 'fuse_act_quant': False, 'fuse_attn_quant': False, 'fuse_allreduce_rms': False, 'enable_qk_norm_rope_fusion': False, 'fuse_rope_kvcache_cat_mla': False, 'fuse_act_padding': False, 'fuse_qk_norm_rope_kvcache': False}, 'max_cudagraph_capture_size': 512, 'dynamic_shapes_config': {'type': <DynamicShapesType.BACKED: 'backed'>, 'evaluate_guards': False, 'assume_32_bit_indexing': False}, 'local_cache_dir': None, 'fast_moe_cold_start': False, 'static_all_moe_layers': []}, kernel_config=KernelConfig(ir_op_priority=IrOpPriorityConfig(rms_norm=['native'], fused_add_rms_norm=['native'], gelu_and_mul_sparse=['triton', 'native']), enable_flashinfer_autotune=True, enable_rocm_segmented_attn_autotune=False, enable_cutedsl_warmup=True, enable_jit_warmup=True, monokernel=False, moe_backend='auto', sparse_indexer_topk_backend='auto', linear_backend='auto', linear_backend_per_quant=None)
+(EngineCore pid=20952) INFO 11-09 07:08:04 [cuda.py:508] Using FLASH_ATTN attention backend out of potential backends: ['FLASH_ATTN', 'FLASHINFER', 'TRITON_ATTN', 'FLEX_ATTENTION'].
+(EngineCore pid=20952) INFO 11-09 07:08:05 [weight_utils.py:1174] Auto-prefetch is disabled because the filesystem (OVERLAY) is not a recognized network FS (NFS/Lustre) and the checkpoint size (13.50 GiB) exceeds 90% of available RAM (9.51 GiB).
+(EngineCore pid=20952) INFO 11-09 07:08:39 [monitor.py:91] [backbone] Initial profiling/warmup run took 0.02 s
+(EngineCore pid=20952) INFO 11-09 07:08:51 [gpu_worker.py:787] CUDA graph memory profiling is enabled (default since v0.21.0). The current --gpu-memory-utilization=0.8500 is equivalent to --gpu-memory-utilization=0.8444 without CUDA graph memory profiling. To maintain the same effective KV cache size as before, increase --gpu-memory-utilization to 0.8556. To disable, set VLLM_MEMORY_PROFILER_ESTIMATE_CUDAGRAPHS=0.
+(EngineCore pid=20952) INFO 11-09 07:09:01 [core.py:405] init engine (profile, create kv cache, warmup model) took 43.06 s (compilation: 19.74 s)
+scoring 30600 responses
+  2000 of 30600
+  4000 of 30600
+  6000 of 30600
+  8000 of 30600
+  10000 of 30600
+  12000 of 30600
+  14000 of 30600
+  16000 of 30600
+  18000 of 30600
+  20000 of 30600
+  22000 of 30600
+  24000 of 30600
+  26000 of 30600
+  28000 of 30600
+  30000 of 30600
+  30600 of 30600
+wrote /root/quantprint-experiments/data-rut-mistral-7b/scores.jsonl
+# RUT and QuantPrint on mistral-7b
+
+RUT: 300 prompts with 100 reference responses each. A BF16 target row is a false positive rate, and every other row is detection power.
+
+## alpha = 5%
+
+| Setup | Test | 5 prompts | 10 prompts | 20 prompts | 50 prompts | 100 prompts |
+|---|---|---|---|---|---|---|
+| BF16 | RUT | 4% | 5% | 4% | 3% | 2% |
+| FP16 | RUT | 6% | 7% | 6% | 3% | 3% |
+| FP16 | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+
+## alpha = 1%
+
+| Setup | Test | 5 prompts | 10 prompts | 20 prompts | 50 prompts | 100 prompts |
+|---|---|---|---|---|---|---|
+| BF16 | RUT | 1% | 2% | 1% | 1% | 0% |
+| FP16 | RUT | 1% | 1% | 2% | 0% | 0% |
+| FP16 | QuantPrint direction | 100% | 100% | 100% | 100% | 100% |
+
+Saved /workspace/results-rut-mistral-7b.tar.gz
+OK: jobs/rut.sh mistral-7b
+cleared model cache
+
+=================== jobs/sglang.sh ===================
+Installing SGLang, about 5 minutes the first time...
+bf16 batch 1 repeat 0: 120 probes in 77 s
+bf16 batch 1 repeat 1: 120 probes in 79 s
+bf16 batch 1 repeat 2: 120 probes in 79 s
+bf16 batch 64 repeat 0: 120 probes in 20 s
+bf16 batch 64 repeat 1: 120 probes in 16 s
+bf16 batch 64 repeat 2: 120 probes in 16 s
+wrote /root/quantprint-experiments/data-sglang/bf16.jsonl
+fp16 batch 1 repeat 0: 120 probes in 77 s
+fp16 batch 1 repeat 1: 120 probes in 77 s
+fp16 batch 1 repeat 2: 120 probes in 77 s
+fp16 batch 64 repeat 0: 120 probes in 15 s
+fp16 batch 64 repeat 1: 120 probes in 16 s
+fp16 batch 64 repeat 2: 120 probes in 16 s
+wrote /root/quantprint-experiments/data-sglang/fp16.jsonl
+fp8 already collected
+int8-gptq batch 1 repeat 0: 120 probes in 50 s
+int8-gptq batch 1 repeat 1: 120 probes in 50 s
+int8-gptq batch 1 repeat 2: 120 probes in 50 s
+int8-gptq batch 64 repeat 0: 120 probes in 15 s
+int8-gptq batch 64 repeat 1: 120 probes in 16 s
+int8-gptq batch 64 repeat 2: 120 probes in 15 s
+wrote /root/quantprint-experiments/data-sglang/int8-gptq.jsonl
+int4-gptq batch 1 repeat 0: 120 probes in 35 s
+int4-gptq batch 1 repeat 1: 120 probes in 35 s
+int4-gptq batch 1 repeat 2: 120 probes in 35 s
+int4-gptq batch 64 repeat 0: 120 probes in 14 s
+int4-gptq batch 64 repeat 1: 120 probes in 15 s
+int4-gptq batch 64 repeat 2: 120 probes in 14 s
+wrote /root/quantprint-experiments/data-sglang/int4-gptq.jsonl
+int4-awq batch 1 repeat 0: 120 probes in 35 s
+int4-awq batch 1 repeat 1: 120 probes in 35 s
+int4-awq batch 1 repeat 2: 120 probes in 35 s
+int4-awq batch 64 repeat 0: 120 probes in 14 s
+int4-awq batch 64 repeat 1: 120 probes in 16 s
+int4-awq batch 64 repeat 2: 120 probes in 14 s
+wrote /root/quantprint-experiments/data-sglang/int4-awq.jsonl
+# Other setup: data-sglang scored against data-nocache
+
+Fingerprints: FP16, FP8, INT8 GPTQ, INT4 GPTQ, INT4 AWQ. False positive rate 1% per test.
+
+## Detection of each quantized setup by its own fingerprint
+
+| Setup | runs | mean score | 5 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|---|
+| FP16 | 6 | 0.984 | 100% | 100% | 100% |
+| INT8 GPTQ | 6 | 0.989 | 100% | 100% | 100% |
+| INT4 GPTQ | 6 | 1.000 | 100% | 100% | 100% |
+| INT4 AWQ | 6 | 0.999 | 100% | 100% | 100% |
+
+## False alarms on honest BF16 from the other setup
+
+| Fingerprint | 5 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|
+| FP16 | 2% | 5% | 3% |
+| FP8 | 1% | 0% | 0% |
+| INT8 GPTQ | 1% | 2% | 1% |
+| INT4 GPTQ | 3% | 4% | 4% |
+| INT4 AWQ | 4% | 8% | 24% |
+
+## Attribution with a Bonferroni threshold, 0.20% per fingerprint
+
+| True setup | 5 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|
+| BF16 | 96.8% | 96.2% | 98.9% |
+| FP16 | 100.0% | 100.0% | 100.0% |
+| INT8 GPTQ | 100.0% | 100.0% | 100.0% |
+| INT4 GPTQ | 100.0% | 100.0% | 100.0% |
+| INT4 AWQ | 100.0% | 100.0% | 100.0% |
+## Direction detector: correlation with each precision's fingerprint, power at 1% false positives
+
+| Precision | Mean score, same precision | Mean score, BF16 noise | 5 prompts | 10 prompts | 20 prompts | 50 prompts |
+|---|---|---|---|---|---|---|
+| FP16 | 0.987 | 0.523 | 100% | 100% | 100% | 100% |
+| INT8 GPTQ | 0.990 | 0.416 | 100% | 100% | 100% | 100% |
+| INT4 GPTQ | 1.000 | -0.012 | 100% | 100% | 100% | 100% |
+| INT4 AWQ | 1.000 | 0.008 | 100% | 100% | 100% | 100% |
+
+## RQ2: attribution accuracy on a held-out batch size
+Saved /workspace/results-sglang.tar.gz
+OK: jobs/sglang.sh
+cleared model cache
+
+Results in /workspace:
+-rw-r--r-- 1 root root 11769369 Nov  9 05:44 /workspace/results-data-a100q.tar.gz
+-rw-r--r-- 1 root root  6834798 Nov  9 07:01 /workspace/results-mistral-7b.tar.gz
+-rw-r--r-- 1 root root  6109062 Nov  9 06:44 /workspace/results-muse-glimmer-30b.tar.gz
+-rw-r--r-- 1 root root   769071 Nov  9 07:11 /workspace/results-rut-mistral-7b.tar.gz
+-rw-r--r-- 1 root root   683950 Nov  9 05:59 /workspace/results-rut-qwen2.5-7b.tar.gz
+-rw-r--r-- 1 root root 13537187 Nov  9 07:44 /workspace/results-sglang.tar.gz
+
+DONE

@@ -4,7 +4,7 @@
 set -e
 F=${1:?give a family: llama3.1-8b, mistral-7b or qwen2.5-32b}
 D=$(python -c "import families; print(families.data_dir('$F'))")
-python check_models.py --family $F | tee logs/check-$F.txt
+mkdir -p logs; python check_models.py --family $F | tee logs/check-$F.txt
 READY=$(grep '^READY:' logs/check-$F.txt | cut -d' ' -f2)
 mkdir -p $D results
 for c in ${READY//,/ }; do
@@ -18,4 +18,4 @@ done
 python analyze.py --data $D > results/report-$D.md 2>&1; sed -n '/## RQ1/,/## Systematic/p;/## Direction detector/,/## RQ2/p' results/report-$D.md
 python mechanism.py --data $D
 python robustness.py --data $D | tail -25
-tar czf /workspace/results-$F.tar.gz $D results/*$D* && echo "Saved /workspace/results-$F.tar.gz"
+tar czf /workspace/results-$F${DATA_SUFFIX:-}.tar.gz $D results/*$D* && echo "Saved /workspace/results-$F.tar.gz"

@@ -11,6 +11,11 @@ def main(a):
     api, token = HfApi(), os.environ.get("HF_TOKEN")
     ok = []
     for name, cfg in families.configs(a.family).items():
+        if cfg["model"].startswith("ckpt/"):
+            local = os.path.isfile(os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg["model"], "config.json"))
+            print(("OK       " if local else "SKIP     ") + f"{name:11s} {cfg['model']}" + ("  (built locally)" if local else "\n         fix: run jobs/quantize.sh first"))
+            if local: ok.append(name)
+            continue
         try:
             info = api.model_info(cfg["model"], token=token, files_metadata=False)
             gated = getattr(info, "gated", False)
