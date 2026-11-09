@@ -29,6 +29,15 @@ FAMILIES = {
         "fp8":      dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="fp8", dtype="bfloat16"),
         "int4-bnb": dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="bitsandbytes", dtype="bfloat16"),
     },
+    # Meta's Muse Glimmer, released openly under Apache 2.0, so no license approval is needed. About 30B parameters with a
+    # vision encoder; BF16 needs over 55 GB, so use an 80 GB GPU. Meta's own quantized builds are GGUF and ExecuTorch,
+    # which vLLM providers do not serve, so the quantized setups here are vLLM's own FP8 and bitsandbytes 4-bit.
+    "muse-glimmer-30b": {
+        "bf16":     dict(model="meta-models/Muse-Glimmer-30B", quantization=None, dtype="bfloat16"),
+        "fp16":     dict(model="meta-models/Muse-Glimmer-30B", quantization=None, dtype="float16"),
+        "fp8":      dict(model="meta-models/Muse-Glimmer-30B", quantization="fp8", dtype="bfloat16"),
+        "int4-bnb": dict(model="meta-models/Muse-Glimmer-30B", quantization="bitsandbytes", dtype="bfloat16"),
+    },
     # A larger model. BF16 needs about 66 GB, so use an 80 GB A100 or H100.
     "qwen2.5-32b": {
         "bf16":      dict(model="Qwen/Qwen2.5-32B-Instruct", quantization=None, dtype="bfloat16"),

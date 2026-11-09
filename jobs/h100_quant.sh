@@ -8,8 +8,10 @@ CONFIGS="fp16 fp8 int8-gptq int4-gptq int4-awq"
 if [ "$TAG" = h100 ] && [ -s data-h100/bf16.jsonl ]; then cp data-h100/bf16.jsonl $OUT/; touch $OUT/bf16.done; else CONFIGS="bf16 $CONFIGS"; fi
 for c in $CONFIGS; do
   [ -f $OUT/$c.done ] && { echo "$c already collected"; continue; }; rm -f $OUT/$c.jsonl
-  python collect.py --family qwen2.5-7b --config $c --batches 1,64 --repeats 2 --probes 120 --out $OUT 2>&1 | grep -E "probes in|wrote|Error|error" || true
-  [ -s $OUT/$c.jsonl ] && touch $OUT/$c.done || { echo "STOP: $c produced no data"; exit 1; }
+  python collect.py --family qwen2.5-7b --config $c --batches 1,64 --repeats ${REPEATS:-2} --probes 120 --out $OUT 2>&1 | grep -E "probes in|wrote|Error|error" || true
+  if [ -s $OUT/$c.jsonl ]; then touch $OUT/$c.done
+  elif [ "$c" = bf16 ]; then echo "STOP: the BF16 reference produced no data"; exit 1
+  else echo "SKIP: $c produced no data, so the analysis leaves it out"; fi
 done
 python other_setup.py --ref data-nocache --other $OUT
 tar czf /workspace/results-$OUT.tar.gz $OUT results/other-$OUT.* && echo "Saved /workspace/results-$OUT.tar.gz"

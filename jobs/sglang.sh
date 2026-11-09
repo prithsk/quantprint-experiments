@@ -13,10 +13,15 @@ for c in bf16 fp16 fp8 int8-gptq int4-gptq int4-awq; do
   [ "$Q" != "-" ] && ARGS="$ARGS --quantization $Q"
   $SG -m sglang.launch_server $ARGS > logs/sglang-$c.log 2>&1 & PID=$!
   for i in $(seq 1 180); do curl -sf http://127.0.0.1:30000/health >/dev/null && break; sleep 5; done
-  if ! curl -sf http://127.0.0.1:30000/health >/dev/null; then echo "STOP: SGLang did not start for $c"; tail -30 logs/sglang-$c.log; kill $PID; exit 1; fi
-  $SG sglang_collect.py --config $c --out $OUT
+  if ! curl -sf http://127.0.0.1:30000/health >/dev/null; then
+    echo "SKIP: SGLang did not start for $c; its log ends:"; tail -15 logs/sglang-$c.log; kill $PID 2>/dev/null; sleep 5
+    [ "$c" = bf16 ] && { echo "STOP: the BF16 reference is required"; exit 1; }; continue
+  fi
+  $SG sglang_collect.py --config $c --out $OUT --repeats ${REPEATS:-2} || echo "SKIP: collection failed for $c"
   kill $PID; wait $PID 2>/dev/null || true; sleep 5
-  [ -s $OUT/$c.jsonl ] && touch $OUT/$c.done || { echo "STOP: $c produced no data"; exit 1; }
+  if [ -s $OUT/$c.jsonl ]; then touch $OUT/$c.done
+  elif [ "$c" = bf16 ]; then echo "STOP: the BF16 reference produced no data"; exit 1
+  else echo "SKIP: $c produced no data, so the analysis leaves it out"; fi
 done
 python other_setup.py --ref data-nocache --other $OUT
 python analyze.py --data $OUT > results/report-sglang.md 2>&1; sed -n '/## Direction detector/,/## RQ2/p' results/report-sglang.md
