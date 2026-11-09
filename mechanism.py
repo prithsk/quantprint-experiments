@@ -10,7 +10,8 @@ DATA = sys.argv[sys.argv.index("--data") + 1] if "--data" in sys.argv else "data
 HW = sys.argv[sys.argv.index("--hw") + 1] if "--hw" in sys.argv else "data-h100"
 runs = A.load(sorted(glob.glob(str(ROOT / DATA / "*.jsonl"))))
 compute = {"bf16": "BF16", "fp16": "FP16", "fp8": "FP8 dynamic, BF16 activations", "int8-gptq": "FP16", "int8-w8a16": "FP16",
-           "int4-gptq": "FP16", "int4-awq": "FP16", "int4-bnb": "BF16, 4-bit weights"}
+           "int4-gptq": "FP16", "int4-awq": "FP16", "int4-bnb": "BF16, 4-bit weights",
+           "int8-wo": "BF16, INT8 weights", "int4-llmc": "BF16, INT4 weights", "kv-fp8": "BF16, FP8 KV cache"}
 out = {}
 for c in [c for c in families.ORDER if (c, 1, 0) in runs]:
     base = runs[(c, 1, 0)]; shifts = []

@@ -45,6 +45,16 @@ FAMILIES = {
         "int4-llmc": dict(model="ckpt/muse-glimmer-30b-w4a16", quantization=None, dtype="bfloat16"),
         "kv-fp8":   dict(model="meta-models/Muse-Glimmer-30B", quantization=None, dtype="bfloat16", kv_cache_dtype="fp8"),
     },
+    # A mid-size model with Qwen's official GPTQ and AWQ checkpoints. BF16 needs about 30 GB, so use a 48 GB GPU or larger.
+    "qwen2.5-14b": {
+        "bf16":      dict(model="Qwen/Qwen2.5-14B-Instruct", quantization=None, dtype="bfloat16"),
+        "fp16":      dict(model="Qwen/Qwen2.5-14B-Instruct", quantization=None, dtype="float16"),
+        "fp8":       dict(model="Qwen/Qwen2.5-14B-Instruct", quantization="fp8", dtype="bfloat16"),
+        "int8-gptq": dict(model="Qwen/Qwen2.5-14B-Instruct-GPTQ-Int8", quantization=None, dtype="float16"),
+        "int4-gptq": dict(model="Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4", quantization=None, dtype="float16"),
+        "int4-awq":  dict(model="Qwen/Qwen2.5-14B-Instruct-AWQ", quantization=None, dtype="float16"),
+        "kv-fp8":    dict(model="Qwen/Qwen2.5-14B-Instruct", quantization=None, dtype="bfloat16", kv_cache_dtype="fp8"),
+    },
     # A larger model. BF16 needs about 66 GB, so use an 80 GB A100 or H100.
     "qwen2.5-32b": {
         "bf16":      dict(model="Qwen/Qwen2.5-32B-Instruct", quantization=None, dtype="bfloat16"),
