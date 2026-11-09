@@ -193,15 +193,32 @@ the FP16 control. This run adds quantized setups for three families on one GPU w
 It also runs RUT on Mistral's new setups. Qwen2.5-14B shows detection on a model twice the size of the others, and Muse
 Glimmer keeps its FP16 control results from the A100 at 30B.
 
-**Use an L40S,** which has 48 GB and native FP8, at roughly $0.80 to $1.00 an hour on RunPod, so the run costs about
-$4 to $5. An RTX 4090 also works but skips the 14B model, since it needs 40 GB. An A100 will not work, since it has no
-native FP8, and the job stops at once if it sees one.
+**GPU choice.** The job needs native FP8, so it runs on Ada, Hopper and Blackwell GPUs and stops at once on an A100,
+A6000 or A40. Pick the first that RunPod has available:
+
+| GPU | Memory | Families | Rough cost |
+|---|---|---|---|
+| L40S, L40 or RTX 6000 Ada | 48 GB | All three | About $4 to $5 |
+| **RTX PRO 6000** | **96 GB** | All three, and optionally quantized Muse Glimmer | About $7 to $10, or about $13 to $16 with Muse |
+| H100 | 80 GB | All three, and optionally Muse | About $10 to $12 |
+| RTX 4090 or 5090 | 24 or 32 GB | Mistral and Llama only | About $3 to $4 |
+
+Check the hourly price on the deploy page, since these are estimates. If a GPU shows no capacity, set Region to
+"Any" and try both Secure Cloud and Community Cloud.
+
+**Optional, on an RTX PRO 6000 or H100: add quantized Muse Glimmer.** Run this line before starting the job. It adds
+about 3 hours and needs a **250 GB** disk:
+
+```bash
+export FAMILIES="mistral-7b llama3.1-8b qwen2.5-14b muse-glimmer-30b"
+```
 
 **Accept the Llama 3.1 8B license first** at `huggingface.co/meta-llama/Llama-3.1-8B-Instruct`. The job runs Llama
 second, so approval has time to arrive. Without it, the job skips Llama and runs the rest.
 
 1. Push the latest scripts from your laptop, the same way as in step 0.
-2. Deploy an **L40S**, On-Demand, RunPod PyTorch, **150 GB** container disk, with at least **$10** of credit.
+2. Deploy your GPU, On-Demand, RunPod PyTorch, with a **150 GB** container disk, or **250 GB** if you add Muse, and
+   at least **$15** of credit, or **$25** with Muse.
 3. On the pod, one line at a time:
 
 ```bash

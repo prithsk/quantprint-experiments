@@ -8,8 +8,8 @@
 # Llama is gated: accept its license on Hugging Face first, or the job skips it and runs the rest.
 set -e
 GPU=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)
-TAG=$(echo "$GPU" | grep -oE "H100|H200|L40S|4090|L4|6000 Ada" | head -1 | tr -d ' ' | tr 'A-Z' 'a-z')
-[ -n "$TAG" ] || { echo "STOP: $GPU has no native FP8. Use an RTX 4090, L40S, L4, RTX 6000 Ada or H100."; exit 1; }
+TAG=$(echo "$GPU" | grep -oE "H100|H200|B200|L40S|L40|4090|5090|L4|6000 Ada|PRO 6000" | head -1 | tr -d ' ' | tr 'A-Z' 'a-z')
+[ -n "$TAG" ] || { echo "STOP: $GPU has no native FP8. Use an L40S, L40, RTX 6000 Ada, RTX PRO 6000, RTX 4090, RTX 5090 or H100."; exit 1; }
 export DATA_SUFFIX=-$TAG
 echo "GPU $GPU: data folders end in $DATA_SUFFIX"
 [ -L ~/.cache/huggingface ] || { [ -d /workspace/.cache/huggingface ] && { rm -rf ~/.cache/huggingface; mkdir -p ~/.cache; ln -s /workspace/.cache/huggingface ~/.cache/huggingface; }; } || true
