@@ -2,6 +2,7 @@
   bf16 is always the reference, and fp16 is a control that changes arithmetic without quantizing.
   vLLM 0.33 dropped bitsandbytes, so Muse and Mistral use vLLM's own INT8 weight-only mode and INT4 GPTQ checkpoints
   that quantize.py builds locally with llm-compressor into ckpt/. Those setups compute in BF16.
+  kv-fp8 keeps BF16 weights and stores the attention cache in FP8, a common provider optimization.
 Run check_models.py on the GPU machine first: it confirms every repository exists and that your token can reach it.
 """
 FAMILIES = {
@@ -21,7 +22,8 @@ FAMILIES = {
         "int8-w8a16": dict(model="RedHatAI/Meta-Llama-3.1-8B-Instruct-quantized.w8a16", quantization=None, dtype="float16"),
         "int4-gptq":  dict(model="hugging-quants/Meta-Llama-3.1-8B-Instruct-GPTQ-INT4", quantization=None, dtype="float16"),
         "int4-awq":   dict(model="hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4", quantization=None, dtype="float16"),
-        "int4-bnb":   dict(model="meta-llama/Meta-Llama-3.1-8B-Instruct", quantization="bitsandbytes", dtype="bfloat16"),
+        "int8-wo":    dict(model="meta-llama/Meta-Llama-3.1-8B-Instruct", quantization="int8_per_channel_weight_only", dtype="bfloat16"),
+        "kv-fp8":     dict(model="meta-llama/Meta-Llama-3.1-8B-Instruct", quantization=None, dtype="bfloat16", kv_cache_dtype="fp8"),
     },
     # The model that Zhu et al. test RUT on. Gated: accept the terms on Hugging Face and set HF_TOKEN.
     "mistral-7b": {
@@ -30,6 +32,7 @@ FAMILIES = {
         "fp8":      dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="fp8", dtype="bfloat16"),
         "int8-wo":  dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization="int8_per_channel_weight_only", dtype="bfloat16"),
         "int4-llmc": dict(model="ckpt/mistral-7b-w4a16", quantization=None, dtype="bfloat16"),
+        "kv-fp8":   dict(model="mistralai/Mistral-7B-Instruct-v0.3", quantization=None, dtype="bfloat16", kv_cache_dtype="fp8"),
     },
     # Meta's Muse Glimmer, released openly under Apache 2.0, so no license approval is needed. About 30B parameters with a
     # vision encoder; BF16 needs over 55 GB, so use an 80 GB GPU. Meta's own quantized builds are GGUF and ExecuTorch,
@@ -40,6 +43,7 @@ FAMILIES = {
         "fp8":      dict(model="meta-models/Muse-Glimmer-30B", quantization="fp8", dtype="bfloat16"),
         "int8-wo":  dict(model="meta-models/Muse-Glimmer-30B", quantization="int8_per_channel_weight_only", dtype="bfloat16"),
         "int4-llmc": dict(model="ckpt/muse-glimmer-30b-w4a16", quantization=None, dtype="bfloat16"),
+        "kv-fp8":   dict(model="meta-models/Muse-Glimmer-30B", quantization=None, dtype="bfloat16", kv_cache_dtype="fp8"),
     },
     # A larger model. BF16 needs about 66 GB, so use an 80 GB A100 or H100.
     "qwen2.5-32b": {
@@ -51,7 +55,7 @@ FAMILIES = {
     },
 }
 NAMES = {"bf16": "BF16", "fp16": "FP16", "fp8": "FP8", "int8-gptq": "INT8 GPTQ", "int8-w8a16": "INT8 W8A16", "int8-wo": "INT8 weight-only",
-         "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-llmc": "INT4 GPTQ, llm-compressor", "int4-bnb": "INT4 bitsandbytes"}
+         "int4-gptq": "INT4 GPTQ", "int4-awq": "INT4 AWQ", "int4-llmc": "INT4 GPTQ, llm-compressor", "int4-bnb": "INT4 bitsandbytes", "kv-fp8": "BF16, FP8 KV cache"}
 ORDER = list(NAMES)
 
 def configs(family):

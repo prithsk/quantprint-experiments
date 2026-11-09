@@ -125,7 +125,7 @@ Set-Location "$HOME\ship\quantprint-experiments"
 Add-Content .env "OPENROUTER_API_KEY=sk-or-YOUR_KEY_HERE"
 python audit_openrouter.py --list
 python audit_openrouter.py
-python audit_score.py
+python audit_score.py --ref data-nocache --audit data-audit-qwen-2.5-7b-instruct
 ```
 
 The first command only lists each provider, its declared precision and whether it returns log-probabilities. The
@@ -179,22 +179,28 @@ Paste each results table to Claude. Claude then:
   (2024);
 - reruns the style scan and the page check, and confirms that every number traces back to data on GitHub.
 
-## 11. Follow-up run: quantized setups for Muse Glimmer and Mistral on an H100
+## 11. Follow-up run: Llama 3.1 8B, Mistral and Muse Glimmer on an H100
 
-vLLM 0.33 dropped bitsandbytes, and dynamic FP8 does not load on an A100, so the first run gave these two families only
-BF16 and the FP16 control. This run adds three quantized setups to each family, all on one H100:
+vLLM 0.33 dropped bitsandbytes, and dynamic FP8 does not load on an A100, so the first run gave Mistral and Muse only
+BF16 and the FP16 control. This run collects every family below on one H100, in folders ending in `-h100`:
 
-- **FP8**, native on the H100.
-- **INT8 weight-only**, vLLM's built-in `int8_per_channel_weight_only` mode.
-- **INT4 GPTQ**, which `quantize.py` builds locally with llm-compressor, calibrated on Dolly filler prompts and never on
-  the probes.
+| Family | Setups |
+|---|---|
+| Llama 3.1 8B | BF16, FP16, FP8, INT8 W8A16, INT8 weight-only, INT4 GPTQ, INT4 AWQ, FP8 KV cache |
+| Mistral 7B | BF16, FP16, FP8, INT8 weight-only, INT4 GPTQ built with llm-compressor, FP8 KV cache |
+| Muse Glimmer 30B | BF16, FP16, FP8, INT8 weight-only, INT4 GPTQ built with llm-compressor, FP8 KV cache |
 
-These setups compute in BF16, so they also test the paper's mechanism, which predicts larger batch effects for them than
-for Qwen's FP16-computing checkpoints. The job also reruns BF16 and FP16 on the H100, so each family's data comes from
-one GPU, and it runs RUT on Mistral's new setups. Everything lands in folders ending in `-h100`, apart from the A100 data.
+- **Llama 3.1 8B** gives the provider audit a widely served model. Its INT4 checkpoints come from hugging-quants.
+- **INT4 GPTQ for Mistral and Muse** comes from `quantize.py`, calibrated on Dolly filler prompts, never on the probes.
+- **The FP8 KV cache** keeps BF16 weights and stores the attention cache in FP8, a common provider optimization.
+- The new INT8, INT4 and KV-cache setups compute in BF16, so they also test the paper's mechanism.
+- The job runs RUT on Mistral's new setups too.
+
+**Before the run, accept the Llama 3.1 8B license** at huggingface.co on the `meta-llama/Meta-Llama-3.1-8B-Instruct`
+page. Approval usually takes under an hour. Without it, the job skips Llama and runs everything else.
 
 1. Push the latest scripts from your laptop, the same way as in step 0.
-2. Deploy an **H100**, On-Demand, RunPod PyTorch, **250 GB** container disk, with at least **$25** of credit.
+2. Deploy an **H100**, On-Demand, RunPod PyTorch, **250 GB** container disk, with at least **$35** of credit.
 3. On the pod, one line at a time:
 
 ```bash
@@ -204,7 +210,10 @@ export REPEATS=3
 bash run_gpu.sh jobs/h100_families.sh
 ```
 
-About 4 hours. The job stops at once on any GPU other than an H100. A setup that fails to load is skipped and logged,
-so paste any SKIP or FAILED lines to Claude. When the log lists the results files, download
-`results-mistral-7b-h100.tar.gz`, `results-muse-glimmer-30b-h100.tar.gz` and `results-rut-mistral-7b-h100.tar.gz`,
-terminate the pod, push them with the step 8 commands and tell Claude.
+About 5 to 6 hours. The job stops at once on any GPU other than an H100. A setup that fails to load is skipped and
+logged, so paste any SKIP or FAILED lines to Claude. When the log lists the results files, download every
+`results-*-h100.tar.gz` file, terminate the pod, push them with the step 8 commands and tell Claude.
+
+**After this run, the audit can cover Llama too.** Run `python audit_openrouter.py --model meta-llama/llama-3.1-8b-instruct --list`
+to see its providers, run it again without `--list`, and score them with
+`python audit_score.py --ref data-llama3.1-8b-h100 --audit data-audit-llama-3.1-8b-instruct`.

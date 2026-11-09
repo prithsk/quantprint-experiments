@@ -27,6 +27,8 @@ def load_llm(cfg, gpu_mem=0.85, prefix_cache=False, max_len=2048):
     from vllm import LLM
     kw = dict(model=cfg["model"], quantization=cfg["quantization"], dtype=cfg["dtype"], max_model_len=max_len,
               gpu_memory_utilization=gpu_mem, seed=0, enable_prefix_caching=prefix_cache)
+    if cfg.get("kv_cache_dtype"):
+        kw["kv_cache_dtype"] = cfg["kv_cache_dtype"]
     try:
         return LLM(**kw)
     except Exception:

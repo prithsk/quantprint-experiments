@@ -51,7 +51,8 @@ def main(a):
     print("providers:", ", ".join(f"{e['provider']} ({e['declared']}{'' if e['logprobs'] else ', no logprobs'})" for e in eps))
     if a.list:
         return
-    out = ROOT / a.out; out.mkdir(exist_ok=True)
+    out = ROOT / (a.out or f"data-audit-{a.model.split('/')[-1]}"); out.mkdir(exist_ok=True)
+    print(f"saving to {out.name}")
     for e in [e for e in eps if e["logprobs"]]:
         path = out / f"api_{e['provider'].replace(' ', '_').replace('/', '_')}.jsonl"
         n = 0
@@ -73,6 +74,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="qwen/qwen-2.5-7b-instruct"); ap.add_argument("--probes", type=int, default=120)
     ap.add_argument("--tokens", type=int, default=64); ap.add_argument("--k", type=int, default=5)
-    ap.add_argument("--pause", type=float, default=0.2); ap.add_argument("--out", default="data-audit")
+    ap.add_argument("--pause", type=float, default=0.2); ap.add_argument("--out", default=None, help="defaults to data-audit-<model>, so each model keeps its own folder")
     ap.add_argument("--list", action="store_true", help="only list providers, their declared precision and logprob support")
     main(ap.parse_args())
