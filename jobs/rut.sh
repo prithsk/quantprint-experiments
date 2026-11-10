@@ -13,4 +13,4 @@ done
 python rut.py score --family $F --out $D 2>&1 | grep -E "scoring|of|wrote|Error|error|Paste" || true
 QP=$(python -c "import families; print(families.data_dir('$F'))")
 python rut.py analyze --family $F --out $D $( [ -d "$QP" ] && echo --quantprint $QP )
-tar czf /workspace/results-rut-$F${DATA_SUFFIX:-}.tar.gz $D results/rut-$F.* && echo "Saved /workspace/results-rut-$F.tar.gz"
+tar czf /workspace/results-rut-$F${DATA_SUFFIX:-}.tar.gz $D results/rut-$F.* && echo "Saved /workspace/results-rut-$F${DATA_SUFFIX:-}.tar.gz"

@@ -2,3 +2,4 @@ numpy
 scikit-learn
 matplotlib
 scipy
+huggingface_hub

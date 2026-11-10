@@ -235,3 +235,14 @@ is skipped and logged, so paste any SKIP or FAILED lines to Claude. When the log
 **After this run, the audit can cover Llama too.** Run `python audit_openrouter.py --model meta-llama/llama-3.1-8b-instruct --list`
 to see its providers, run it again without `--list`, and score them with `python audit_score.py --ref data-llama3.1-8b-l40s --audit data-audit-llama-3.1-8b-instruct`,
 using the folder name for the GPU you rented.
+
+## 12. Protecting results on long runs
+
+A pod that stops, for example when the balance runs out, loses its whole disk. Two safeguards prevent that:
+
+1. **In RunPod, turn on auto-pay and a low-balance alert** under Billing before any long run.
+2. **Use a Hugging Face token with WRITE access as HF_TOKEN.** The long jobs then upload each finished family's results
+   to a private dataset, `huggingface.co/datasets/prithsk/quantprint-results`, right after the family finishes, so a
+   stopped pod loses at most the family in progress. Create the token under Settings, Access Tokens, and choose
+   **Write**. Watch the log for `uploaded results-...` lines to confirm it works. On your laptop,
+   `python download_results.py` downloads and unpacks every uploaded file into the repo.

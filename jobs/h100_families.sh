@@ -14,7 +14,8 @@ export DATA_SUFFIX=-$TAG
 echo "GPU $GPU: data folders end in $DATA_SUFFIX"
 [ -L ~/.cache/huggingface ] || { [ -d /workspace/.cache/huggingface ] && { rm -rf ~/.cache/huggingface; mkdir -p ~/.cache; ln -s /workspace/.cache/huggingface ~/.cache/huggingface; }; } || true
 clean() { rm -rf ~/.cache/huggingface/hub/models--* 2>/dev/null; echo "cleared model cache"; }
-step() { echo; echo "=================== $* ==================="; if bash "$@"; then echo "OK: $*"; else echo "FAILED: $* (continuing)"; fi; }
+save() { tar czf /workspace/logs.tar.gz -C "$(pwd)" logs 2>/dev/null; python upload_results.py || true; }
+step() { echo; echo "=================== $* ==================="; if bash "$@"; then echo "OK: $*"; else echo "FAILED: $* (continuing)"; fi; save; }
 MEM=$(nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits | head -1)
 for F in ${FAMILIES:-mistral-7b llama3.1-8b qwen2.5-14b}; do
   if [ $F = qwen2.5-14b ] && [ "$MEM" -lt 40000 ]; then echo "SKIP: Qwen2.5-14B needs a GPU with 40 GB or more"; continue; fi

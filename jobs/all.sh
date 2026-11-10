@@ -5,7 +5,8 @@
 # Muse Glimmer serves as both the second model family and the larger model. To add more families at the end, set
 # EXTRA_FAMILIES first, for example: export EXTRA_FAMILIES="llama3.1-8b qwen2.5-32b"
 clean() { rm -rf ~/.cache/huggingface/hub/models--* 2>/dev/null; echo "cleared model cache"; }
-step() { echo; echo "=================== $* ==================="; if bash "$@"; then echo "OK: $*"; else echo "FAILED: $* (continuing)"; fi; }
+save() { tar czf /workspace/logs.tar.gz -C "$(pwd)" logs 2>/dev/null; python upload_results.py || true; }
+step() { echo; echo "=================== $* ==================="; if bash "$@"; then echo "OK: $*"; else echo "FAILED: $* (continuing)"; fi; save; }
 step jobs/h100_quant.sh
 step jobs/rut.sh qwen2.5-7b;          clean
 step jobs/family.sh muse-glimmer-30b;  clean
